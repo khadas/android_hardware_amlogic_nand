@@ -32,6 +32,7 @@ extern void print_free_list(struct aml_nftl_part_t* part);
 extern void print_block_invalid_list(struct aml_nftl_part_t* part);
 extern int aml_nftl_erase_part(struct aml_nftl_part_t *part);
 extern int aml_nftl_initialize(struct aml_nftl_blk_t *aml_nftl_blk,int no);
+extern int aml_nftl_reinit_part(struct aml_nftl_blk_t *aml_nftl_blk);
 
 uint32 _nand_read(struct aml_nftl_blk_t *aml_nftl_blk,uint32 start_sector,uint32 len,unsigned char *buf);
 uint32 _nand_write(struct aml_nftl_blk_t *aml_nftl_blk,uint32 start_sector,uint32 len,unsigned char *buf);
@@ -58,7 +59,7 @@ static struct class_attribute nftl_class_attrs[] = {
     __ATTR(flush,  S_IRUGO ,NULL, do_flush),
     __ATTR(gcone,  S_IRUGO ,NULL, do_gc_one),
     __ATTR(test,  S_IRUGO | S_IWUSR , NULL,    do_test),
-    __ATTR(erase_init,  S_IRUGO | S_IWUSR , NULL, do_erase_init),
+    //__ATTR(erase_init,  S_IRUGO | S_IWUSR , NULL, do_erase_init),
 //    __ATTR(cache_struct,  S_IRUGO , show_logic_block_table,    NULL),
 //    __ATTR(table,  S_IRUGO | S_IWUSR , NULL,    show_logic_page_table),
 

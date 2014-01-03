@@ -443,6 +443,20 @@ static int aml_nftl_reboot_notifier(struct notifier_block *nb, unsigned long pri
 	return error;
 }
 
+static void aml_nftl_wipe_part(struct mtd_blktrans_dev *mbd)
+{
+	int error = 0;
+	struct aml_nftl_blk_t *aml_nftl_blk = (void *)mbd;
+	struct aml_nftl_part_t* aml_nftl_part = aml_nftl_blk->aml_nftl_part;
+
+	error = aml_nftl_reinit_part(aml_nftl_blk);
+	if(error){
+		PRINT("aml_nftl_reinit_part: failed\n");
+	}
+	
+	return;
+}
+
 /*****************************************************************************
 *Name         :
 *Description  :
@@ -642,6 +656,7 @@ static struct mtd_blktrans_ops aml_nftl_tr = {
 	.flush		= aml_nftl_flush,
 	.add_mtd	= aml_nftl_add_mtd,
 	.remove_dev	= aml_nftl_remove_dev,
+	.wipe_part  = aml_nftl_wipe_part,
 	.owner		= THIS_MODULE,
 };
 

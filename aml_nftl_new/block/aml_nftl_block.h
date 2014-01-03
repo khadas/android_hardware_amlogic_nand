@@ -65,6 +65,7 @@ struct aml_nftl_blk_t{
 	uint32 (*shutdown_op)(struct aml_nftl_blk_t *aml_nftl_blk);
 
 };
+extern int aml_nftl_reinit_part(struct aml_nftl_blk_t *aml_nftl_blk);
 extern int aml_register_mtd_blktrans(struct mtd_blktrans_ops *tr);
 extern int aml_deregister_mtd_blktrans(struct mtd_blktrans_ops *tr);
 extern int aml_add_mtd_blktrans_dev(struct mtd_blktrans_dev *dev);
