@@ -505,6 +505,12 @@ plane0_ff_m:
 //						
 						aml_nand_msg("####uncorrect ecc here at page:%d plane 1 chip:%d", page_addr, chipnr);
 						ops_para->ecc_err++;
+						if(retry_info->flag && (flash->new_type)&&(flash->new_type < 10)){
+							ret = nand_reset(aml_chip, chipnr);
+							if(ret < 0){
+							       aml_nand_msg("reset failed after retry failed at chip %d",chipnr); 
+							}
+						}
 					}
 					else if(ret < 0){
 						aml_nand_msg("failed ");						
@@ -742,6 +748,12 @@ plane0_ff_h:
 //									
 						aml_nand_msg("uncorrect ecc here at page:%d", page_addr);
 						ops_para->ecc_err++;
+						if(retry_info->flag && (flash->new_type)&&(flash->new_type < 10)){
+							ret = nand_reset(aml_chip, chipnr);
+							if(ret < 0){
+							       aml_nand_msg("reset failed after retry failed at chip %d",chipnr); 
+							}
+						}
 					}
 					else if(ret){
 						aml_nand_msg("failed ");
@@ -837,6 +849,13 @@ plane0_ff_h:
 					}	
 					aml_nand_msg("uncorrect ecc here at page:%d, chip:%d", page_addr, chipnr);
 					ops_para->ecc_err++;
+					if(retry_info->flag && (flash->new_type)&&(flash->new_type < 10)){
+						ret = nand_reset(aml_chip, chipnr);
+						if(ret < 0){
+						       aml_nand_msg("reset failed after retry failed at chip %d",chipnr); 
+						}
+					}
+					
 				}
 				else if(ret < 0){
 					aml_nand_msg("failed ");
