@@ -36,6 +36,7 @@
 #include <linux/fd.h>
 #include <linux/param.h>
 
+#include <mtd/mtd-abi.h> 
 #include "aml_ntd.h"
 
 LIST_HEAD(ntd_blktrans_majors);
@@ -339,6 +340,14 @@ int blktrans_ioctl(struct block_device *bdev, fmode_t mode,unsigned int cmd, uns
             ret = dev->tr->flush ? dev->tr->flush(dev) : 0;
             printk("blktrans_ioctl nftl_flush\n");
         break;
+	case BLKWIPEPART:
+		
+		//printk("blktrans_ioctl BLKWIPEPART \n");
+		if(tr->wipe_part){
+           		 printk("blktrans_ioctl tr->wipe_part : \n");
+			ret = tr->wipe_part(dev);
+		}		
+		break;
   //  case BLKGETSECTS:
   //  case BLKFREESECTS:
 //      if (tr->update_blktrans_sysinfo)

@@ -6,7 +6,7 @@
 
 #define NFTL_DONT_CACHE_DATA                      0
 #define SUPPORT_GC_READ_RECLAIM                   0
-#define SUPPORT_WEAR_LEVELING                     1
+#define SUPPORT_WEAR_LEVELING                     0
 #define NFTL_ERASE                                0
 
 #ifdef NAND_ADJUST_PART_TABLE
@@ -24,7 +24,7 @@
 #define GC_THRESHOLD_RATIO_DENOMINATOR            3
 
 #define MAX_CACHE_WRITE_NUM  				      4
-#define NFTL_CACHE_FLUSH_SYNC                      0
+#define NFTL_CACHE_FLUSH_SYNC                      1
 
 
 extern uint32 aml_nftl_get_part_cap(void * _part);

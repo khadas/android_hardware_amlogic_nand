@@ -145,6 +145,7 @@ struct ntd_blktrans_ops {
 	/* Called with ntd_table_mutex held; no race with add/remove */
 	int (*open)(struct ntd_blktrans_dev *dev);
 	int (*release)(struct ntd_blktrans_dev *dev);
+	int(*wipe_part)(struct ntd_blktrans_dev *dev);
 
 	/* Called on {de,}registration and on subsequent addition/removal
 	   of devices, with ntd_table_mutex held. */

@@ -55,6 +55,7 @@ extern void aml_nftl_free(const void *ptr);
 //extern int aml_nftl_dbg(const char * fmt,args...);
 extern int aml_blktrans_initialize(struct aml_nftl_blk *nftl_blk,struct aml_nftl_dev *nftl_dev,uint64_t offset,uint64_t size);
 extern void amlnf_ktime_get_ts(struct timespec *ts);
+extern int aml_nftl_erase_part(struct aml_nftl_part_t *part);
 //static struct ntd_blktrans_dev *blktrans_dev_get_blk(struct gendisk *disk);
 //static void blktrans_dev_put_blk(struct ntd_blktrans_dev *dev);
 //int register_ntd_blktrans_blk(struct ntd_blktrans_ops *tr);
@@ -432,6 +433,43 @@ static int aml_nftl_reboot_notifier(struct notifier_block *nb, unsigned long pri
     return error;
 }
 
+int aml_nftl_reinit_part(struct aml_nftl_dev * nftl_dev)
+{
+       struct aml_nftl_part_t * part = NULL;
+       int ret =0;
+
+       part = nftl_dev->aml_nftl_part;
+      mutex_lock(nftl_dev->aml_nftl_lock);
+
+       //kthread_stop(aml_nftl_blk->nftl_thread);
+
+       ret = aml_nftl_erase_part(part);
+       if(ret){
+               PRINT("aml_nftl_erase_part : failed\n");
+       }
+
+       if(aml_nftl_initialize(nftl_dev,-1)){
+          PRINT("aml_nftl_reinit_part : aml_nftl_initialize failed\n");
+       }
+       
+      mutex_unlock(nftl_dev->aml_nftl_lock);
+       //wake_up_process(aml_nftl_blk->nftl_thread);
+       return ret ;
+}
+
+static void aml_nftl_wipe_part(struct ntd_blktrans_dev *dev)
+{
+    	struct aml_nftl_blk *nftl_blk = (void *)dev;
+	struct aml_nftl_dev * nftl_dev = nftl_blk->nftl_dev;
+	int error = 0;
+
+	error = aml_nftl_reinit_part(nftl_dev);
+	if(error){
+		PRINT("aml_nftl_reinit_part: failed\n");
+	}	
+	return;
+}
+
 /*****************************************************************************
 *Name         :
 *Description  :
@@ -609,6 +647,7 @@ static struct ntd_blktrans_ops aml_nftl_tr = {
     .flush      = aml_nftl_flush,
     .add_ntd    = aml_nftl_add_ntd,
     .remove_dev = aml_nftl_remove_dev,
+    .wipe_part	= aml_nftl_wipe_part,
     .owner      = THIS_MODULE,
 };
 

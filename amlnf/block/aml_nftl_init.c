@@ -32,6 +32,7 @@ extern uint32 __nand_flush_write_cache(struct aml_nftl_part_t* part);
 extern void print_free_list(struct aml_nftl_part_t* part);
 extern void print_block_invalid_list(struct aml_nftl_part_t* part);
 extern  int get_adjust_block_num(void);
+extern int aml_nftl_erase_part(struct aml_nftl_part_t *part);
 
 uint32 _nand_read(struct aml_nftl_dev *nftl_dev,uint32 start_sector,uint32 len,unsigned char *buf);
 uint32 _nand_write(struct aml_nftl_dev *nftl_dev,uint32 start_sector,uint32 len,unsigned char *buf);
@@ -62,6 +63,9 @@ static struct class_attribute nftl_class_attrs[] = {
 
     __ATTR_NULL
 };
+
+int aml_nftl_initialize(struct aml_nftl_dev *nftl_dev,int no);
+
 
 /*****************************************************************************
 *Name         :
@@ -133,6 +137,10 @@ int aml_nftl_initialize(struct aml_nftl_dev *nftl_dev,int no)
 	nftl_dev->write_data = _nand_write;
 	nftl_dev->flush_write_cache = _nand_flush_write_cache;
 
+	if(no < 0){
+		return ret; // for erase init FTL part
+	}
+	
     //setup class
     if(memcmp(ntd->name, "nfcode", 6)==0)
     {
