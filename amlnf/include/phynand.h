@@ -744,7 +744,7 @@ extern int32_t nand_secure_write(struct amlnand_chip * aml_chip, char *buf,int l
 extern int aml_sys_info_init(struct amlnand_chip *aml_chip);
 extern void nand_boot_info_prepare(struct amlnand_phydev *phydev, unsigned char * page0_buf);
 extern void uboot_set_ran_mode(struct amlnand_phydev *phydev);
-extern void get_sys_clk_rate(int rate);
+extern void get_sys_clk_rate(int * rate);
 extern int aml_ubootenv_init(struct amlnand_chip *aml_chip);
 
 #ifndef AML_NAND_UBOOT

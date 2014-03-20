@@ -3,8 +3,11 @@
 #include<linux/cdev.h>
 #include <linux/device.h>
 
+#ifdef CONFIG_NAND_AML_M8
 #define CONFIG_ENV_SIZE  (64*1024)
-
+#else
+#define CONFIG_ENV_SIZE  0x8000
+#endif
 
 int amlnf_env_read(unsigned char *buf,int len);
 int amlnf_env_save(unsigned char *buf,int len);
