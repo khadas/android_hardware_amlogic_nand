@@ -13,11 +13,11 @@
 extern int is_phydev_off_adjust(void);
 extern int amlnf_class_register(struct class* cls);
 extern void amlnf_ktime_get_ts(struct timespec *ts);
-extern int aml_nftl_start(void* priv,void* cfg,struct aml_nftl_part_t ** ppart,uint64_t size,unsigned erasesize,unsigned writesize,unsigned oobavail,char* name,int no,char type);
+extern int aml_nftl_start(void* priv,void* cfg,struct aml_nftl_part_t ** ppart,uint64_t size,unsigned erasesize,unsigned writesize,unsigned oobavail,char* name,int no,char type,int init_flag);
 extern uint32 gc_all(struct aml_nftl_part_t* part);
 extern uint32 gc_one(struct aml_nftl_part_t* part);
 extern void print_nftl_part(struct aml_nftl_part_t * part);
-extern int part_param_init(struct aml_nftl_part_t *part,uint16 start_block,uint32_t logic_sects,uint32_t backup_cap_in_sects);
+extern int part_param_init(struct aml_nftl_part_t *part,uint16 start_block,uint32_t logic_sects,uint32_t backup_cap_in_sects,int init_flag);
 extern uint32 is_no_use_device(struct aml_nftl_part_t * part,uint32 size);
 extern uint32 create_part_list_first(struct aml_nftl_part_t * part,uint32 size);
 extern uint32 create_part_list(struct aml_nftl_part_t * part);
@@ -128,10 +128,9 @@ int aml_nftl_initialize(struct aml_nftl_dev *nftl_dev,int no)
 	nftl_dev->nftl_cfg.nftl_gc_threshold_ratio_denominator = GC_THRESHOLD_RATIO_DENOMINATOR;
 	nftl_dev->nftl_cfg.nftl_max_cache_write_num = MAX_CACHE_WRITE_NUM;
 
-	ret = aml_nftl_start((void*)nftl_dev,&nftl_dev->nftl_cfg,&nftl_dev->aml_nftl_part,ntd->size,ntd->blocksize,ntd->pagesize,ntd->oobsize,ntd->name,no,0);
+	ret = aml_nftl_start((void*)nftl_dev,&nftl_dev->nftl_cfg,&nftl_dev->aml_nftl_part,ntd->size,ntd->blocksize,ntd->pagesize,ntd->oobsize,ntd->name,no,0,nftl_dev->init_flag);
 	if(ret != 0)
 	    return ret;
-
 	nftl_dev->size = aml_nftl_get_part_cap(nftl_dev->aml_nftl_part);
 	nftl_dev->read_data = _nand_read;
 	nftl_dev->write_data = _nand_write;

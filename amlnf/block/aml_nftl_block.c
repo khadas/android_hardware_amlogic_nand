@@ -462,11 +462,10 @@ static void aml_nftl_wipe_part(struct ntd_blktrans_dev *dev)
     	struct aml_nftl_blk *nftl_blk = (void *)dev;
 	struct aml_nftl_dev * nftl_dev = nftl_blk->nftl_dev;
 	int error = 0;
-
 	error = aml_nftl_reinit_part(nftl_dev);
 	if(error){
 		PRINT("aml_nftl_reinit_part: failed\n");
-	}	
+	}
 	return;
 }
 
@@ -497,7 +496,8 @@ static void aml_nftl_add_ntd(struct ntd_blktrans_ops *tr, struct ntd_info *ntd)
 	       return;
 
 	mutex_init(nftl_dev->aml_nftl_lock);
-
+    
+    nftl_dev->init_flag = 0;
     nftl_dev->ntd = ntd;
     nftl_dev->nb.notifier_call = aml_nftl_reboot_notifier;
     register_reboot_notifier(&nftl_dev->nb);
@@ -506,7 +506,7 @@ static void aml_nftl_add_ntd(struct ntd_blktrans_ops *tr, struct ntd_info *ntd)
         aml_nftl_dbg("aml_nftl_initialize failed\n");
         return;
     }
-
+    nftl_dev->init_flag = 1;
     ntd->nftl_priv = (void*)nftl_dev;
 
     nftl_dev->nftl_thread = kthread_run(aml_nftl_thread, nftl_dev, "%sd", "aml_nftl");
