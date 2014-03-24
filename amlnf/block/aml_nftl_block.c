@@ -56,6 +56,7 @@ extern void aml_nftl_free(const void *ptr);
 extern int aml_blktrans_initialize(struct aml_nftl_blk *nftl_blk,struct aml_nftl_dev *nftl_dev,uint64_t offset,uint64_t size);
 extern void amlnf_ktime_get_ts(struct timespec *ts);
 extern int aml_nftl_erase_part(struct aml_nftl_part_t *part);
+extern int aml_nftl_set_status(struct aml_nftl_part_t *part,unsigned char status);
 //static struct ntd_blktrans_dev *blktrans_dev_get_blk(struct gendisk *disk);
 //static void blktrans_dev_put_blk(struct ntd_blktrans_dev *dev);
 //int register_ntd_blktrans_blk(struct ntd_blktrans_ops *tr);
@@ -439,6 +440,10 @@ int aml_nftl_reinit_part(struct aml_nftl_dev * nftl_dev)
        int ret =0;
 
        part = nftl_dev->aml_nftl_part;
+       aml_nftl_set_status(part,0);
+       if(nftl_dev->nftl_thread!=NULL){
+            kthread_stop(nftl_dev->nftl_thread); //add stop thread to ensure nftl quit safely
+        }
       mutex_lock(nftl_dev->aml_nftl_lock);
 
        //kthread_stop(aml_nftl_blk->nftl_thread);
@@ -453,7 +458,9 @@ int aml_nftl_reinit_part(struct aml_nftl_dev * nftl_dev)
        }
        
       mutex_unlock(nftl_dev->aml_nftl_lock);
-       //wake_up_process(aml_nftl_blk->nftl_thread);
+      if(nftl_dev->nftl_thread!=NULL){
+       wake_up_process(nftl_dev->nftl_thread);
+       }
        return ret ;
 }
 

@@ -33,7 +33,7 @@ extern void print_free_list(struct aml_nftl_part_t* part);
 extern void print_block_invalid_list(struct aml_nftl_part_t* part);
 extern  int get_adjust_block_num(void);
 extern int aml_nftl_erase_part(struct aml_nftl_part_t *part);
-
+extern int aml_nftl_set_status(struct aml_nftl_part_t *part,unsigned char status);
 uint32 _nand_read(struct aml_nftl_dev *nftl_dev,uint32 start_sector,uint32 len,unsigned char *buf);
 uint32 _nand_write(struct aml_nftl_dev *nftl_dev,uint32 start_sector,uint32 len,unsigned char *buf);
 uint32 _nand_flush_write_cache(struct aml_nftl_dev *nftl_dev);
@@ -130,7 +130,16 @@ int aml_nftl_initialize(struct aml_nftl_dev *nftl_dev,int no)
 
 	ret = aml_nftl_start((void*)nftl_dev,&nftl_dev->nftl_cfg,&nftl_dev->aml_nftl_part,ntd->size,ntd->blocksize,ntd->pagesize,ntd->oobsize,ntd->name,no,0,nftl_dev->init_flag);
 	if(ret != 0)
-	    return ret;
+	{
+        //if(memcmp(ntd->name, "nfcache", 7)==0)
+        {
+            if(nftl_dev->init_flag == 0)
+            {
+                aml_nftl_set_status(nftl_dev->aml_nftl_part,1);
+            }
+    	   // return ret;
+        }
+	}
 	nftl_dev->size = aml_nftl_get_part_cap(nftl_dev->aml_nftl_part);
 	nftl_dev->read_data = _nand_read;
 	nftl_dev->write_data = _nand_write;
