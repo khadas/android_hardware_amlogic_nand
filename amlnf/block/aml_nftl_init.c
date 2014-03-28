@@ -107,8 +107,8 @@ int aml_nftl_initialize(struct aml_nftl_dev *nftl_dev,int no)
 	uint32_t phys_erase_shift;
 	uint32_t ret;
 
-	if (ntd->oobsize < MIN_BYTES_OF_USER_PER_PAGE)
-		return -EPERM;
+	//if (ntd->oobsize < MIN_BYTES_OF_USER_PER_PAGE)
+	//	return -EPERM;
 
 	nftl_dev->nftl_cfg.nftl_use_cache = NFTL_DONT_CACHE_DATA;
 	nftl_dev->nftl_cfg.nftl_support_gc_read_reclaim = SUPPORT_GC_READ_RECLAIM;

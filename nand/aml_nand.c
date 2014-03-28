@@ -6891,6 +6891,9 @@ int aml_nand_init(struct aml_nand_chip *aml_chip)
 				case 1280:
 					chip->ecc.layout = &aml_nand_oob_1280;
 					break;		
+				case 1664:
+					chip->ecc.layout = &aml_nand_oob_1664;
+					break;		
 				default:
 					printk("havn`t found any oob layout use nand base oob layout " "oobsize %d\n", mtd->oobsize);
 					chip->ecc.layout = kzalloc(sizeof(struct nand_ecclayout), GFP_KERNEL);
