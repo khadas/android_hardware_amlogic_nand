@@ -2326,8 +2326,6 @@ static void aml_nand_base_command(struct aml_nand_chip *aml_chip, unsigned comma
 				if ((aml_chip->mfr_type == NAND_MFR_MICRON) || (aml_chip->mfr_type == NAND_MFR_INTEL)) {
 					plane_page_addr |= ((plane_blk_addr + 1) << pages_per_blk_shift);
 					command_temp = command;
-					chip->cmd_ctrl(mtd, 0x32, NAND_NCE | NAND_CLE | NAND_CTRL_CHANGE);
-					aml_chip->aml_nand_wait_devready(aml_chip, chipnr);
 					chip->cmd_ctrl(mtd, command_temp & 0xff, NAND_NCE | NAND_CLE | NAND_CTRL_CHANGE);
 				}
 				else {
@@ -2522,9 +2520,9 @@ static void aml_nand_command(struct mtd_info *mtd, unsigned command, int column,
 
 		aml_chip->page_addr = page_addr / valid_page_num;
 		if (unlikely(aml_chip->page_addr >= aml_chip->internal_page_nums)) {
-			internal_chip = aml_chip->page_addr / aml_chip->internal_page_nums; 
+			//internal_chip = aml_chip->page_addr / aml_chip->internal_page_nums; 
 			aml_chip->page_addr -= aml_chip->internal_page_nums;
-			aml_chip->page_addr |= (1 << aml_chip->internal_chip_shift) * internal_chip;
+			aml_chip->page_addr |= (1 << aml_chip->internal_chip_shift) * aml_chip->internal_chipnr;
 		}
 	}
 
@@ -2573,9 +2571,9 @@ static void aml_nand_erase_cmd(struct mtd_info *mtd, int page)
 
 	aml_chip->page_addr = page / valid_page_num;
 	if (unlikely(aml_chip->page_addr >= aml_chip->internal_page_nums)) {
-		internal_chipnr = aml_chip->page_addr / aml_chip->internal_page_nums;
+		//internal_chipnr = aml_chip->page_addr / aml_chip->internal_page_nums;
 		aml_chip->page_addr -= aml_chip->internal_page_nums;
-		aml_chip->page_addr |= (1 << aml_chip->internal_chip_shift) * internal_chipnr;
+		aml_chip->page_addr |= (1 << aml_chip->internal_chip_shift) * aml_chip->internal_chipnr;
 	}
 
 	if (unlikely(aml_chip->ops_mode & AML_INTERLEAVING_MODE))
@@ -2891,7 +2889,7 @@ static int aml_nand_read_page_hwecc(struct mtd_info *mtd, struct nand_chip *chip
 	int ran_mode = aml_chip->ran_mode;
 #endif
 	int retry_cnt =aml_chip->new_nand_info.read_rety_info.retry_cnt;
-	if ((aml_chip->new_nand_info.type == HYNIX_20NM_8GB) || (aml_chip->new_nand_info.type == HYNIX_20NM_4GB))
+	if ((aml_chip->new_nand_info.type == HYNIX_20NM_8GB) || (aml_chip->new_nand_info.type == HYNIX_20NM_4GB)|| (aml_chip->new_nand_info.type == HYNIX_1YNM_8GB))
 		retry_cnt = aml_chip->new_nand_info.read_rety_info.retry_cnt *aml_chip->new_nand_info.read_rety_info.retry_cnt;
 	
 	if (aml_chip->ops_mode & AML_INTERLEAVING_MODE)
@@ -3338,8 +3336,7 @@ static int aml_nand_read_oob(struct mtd_info *mtd, struct nand_chip *chip, int p
 	int ran_mode = aml_chip->ran_mode;
 #endif	
 	int retry_cnt =aml_chip->new_nand_info.read_rety_info.retry_cnt;
-//	printk("nand_read_size =%d,read_chip_num=%d\n",nand_read_size,read_chip_num);
-	if ((aml_chip->new_nand_info.type == HYNIX_20NM_8GB) || (aml_chip->new_nand_info.type == HYNIX_20NM_4GB))
+	if ((aml_chip->new_nand_info.type == HYNIX_20NM_8GB) || (aml_chip->new_nand_info.type == HYNIX_20NM_4GB)|| (aml_chip->new_nand_info.type == HYNIX_1YNM_8GB))
 		retry_cnt = aml_chip->new_nand_info.read_rety_info.retry_cnt *aml_chip->new_nand_info.read_rety_info.retry_cnt;
 	
 	if (nand_read_size >= nand_page_size)
@@ -5644,7 +5641,7 @@ static int aml_nand_env_init(struct mtd_info *mtd)
 	struct aml_nand_chip *aml_chip = mtd_to_nand_chip(mtd);
 	struct nand_chip *chip = &aml_chip->chip;
 	struct env_oobinfo_t *env_oobinfo;
-	struct env_free_node_t *env_free_node, *env_tmp_node, *env_prev_node;
+	struct env_free_node_t *env_free_node, *env_tmp_node = NULL, *env_prev_node = NULL;
 	int error = 0, err, start_blk, total_blk, env_blk, i, j, pages_per_blk, bad_blk_cnt = 0, max_env_blk, phys_erase_shift;
 	loff_t offset;
 	unsigned char *data_buf =NULL;

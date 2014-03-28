@@ -399,15 +399,15 @@ static void m3_nand_resume(struct mtd_info *mtd)
 			printk("onfi timing mode set failed: %x\n", onfi_features[0]);
 		}
 	}
-//	if (chip->state == FL_PM_SUSPENDED)
-	//	nand_release_device(mtd);
+	if (chip->state == FL_PM_SUSPENDED)
+		nand_release_device(mtd);
 
-	chip->select_chip(mtd, -1);
-	spin_lock(&chip->controller->lock);
-	chip->controller->active = NULL;
-	chip->state = FL_READY;
-	wake_up(&chip->controller->wq);
-	spin_unlock(&chip->controller->lock);
+//	chip->select_chip(mtd, -1);
+//	spin_lock(&chip->controller->lock);
+//	chip->controller->active = NULL;
+//	chip->state = FL_READY;
+//	wake_up(&chip->controller->wq);
+//	spin_unlock(&chip->controller->lock);
 
 	printk("m3 nand resume entered\n");
 	return;
