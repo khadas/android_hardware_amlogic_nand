@@ -440,13 +440,13 @@ int aml_nftl_reinit_part(struct aml_nftl_dev * nftl_dev)
        int ret =0;
 
        part = nftl_dev->aml_nftl_part;
+       
        aml_nftl_set_status(part,0);
        if(nftl_dev->nftl_thread!=NULL){
             kthread_stop(nftl_dev->nftl_thread); //add stop thread to ensure nftl quit safely
         }
       mutex_lock(nftl_dev->aml_nftl_lock);
 
-       //kthread_stop(aml_nftl_blk->nftl_thread);
 
        ret = aml_nftl_erase_part(part);
        if(ret){
@@ -456,7 +456,6 @@ int aml_nftl_reinit_part(struct aml_nftl_dev * nftl_dev)
        if(aml_nftl_initialize(nftl_dev,-1)){
           PRINT("aml_nftl_reinit_part : aml_nftl_initialize failed\n");
        }
-       
       mutex_unlock(nftl_dev->aml_nftl_lock);
       if(nftl_dev->nftl_thread!=NULL){
        wake_up_process(nftl_dev->nftl_thread);

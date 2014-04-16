@@ -11,6 +11,7 @@
 #include "../include/amlnf_dev.h"
 
 
+
 #pragma pack(1)
 
 #define AML_NFTL1_MAGIC			     "aml_nftlcode"
