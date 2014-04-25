@@ -707,6 +707,9 @@ struct amlnand_chip {
 #ifndef AML_NAND_UBOOT	
 	struct pinctrl *nand_pinctrl;
 	struct pinctrl_state *nand_pinstate;
+	struct pinctrl_state *nand_rbstate;
+	struct pinctrl_state *nand_norbstate;
+	struct pinctrl_state *nand_idlestate;
 	struct device			device;
 #endif
 	unsigned char reserved_blk[RESERVED_BLOCK_CNT];

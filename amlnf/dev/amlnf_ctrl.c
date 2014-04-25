@@ -130,21 +130,21 @@ int phydev_resume(struct amlnand_phydev *phydev)
 	amlchip_resume(phydev);
 	return 0;
 }
-
+int nand_idleflag=0;
 #define	NAND_CTRL_NONE_RB 						(1<<1)
 void   nand_get_chip(void *chip)
 {
 	struct amlnand_chip *aml_chip = (struct amlnand_chip *)chip;
 	struct hw_controller *controller = &(aml_chip->controller);
-	int retry = 0;
+	int retry = 0,ret;
 	while(1){
 			mutex_lock(&spi_nand_mutex);
+			nand_idleflag=1;
 			if((controller->option & NAND_CTRL_NONE_RB) == 0)
-				aml_chip->nand_pinctrl = devm_pinctrl_get_select(&aml_chip->device,"nand_rb_mod");
+				ret = pinctrl_select_state(aml_chip->nand_pinctrl , aml_chip->nand_rbstate);
 			else
-				aml_chip->nand_pinctrl = devm_pinctrl_get_select(&aml_chip->device,"nand_norb_mod");
-			if (IS_ERR(aml_chip->nand_pinctrl)){
-				aml_chip->nand_pinctrl = NULL;
+				ret = pinctrl_select_state(aml_chip->nand_pinctrl , aml_chip->nand_norbstate);
+			if (ret<0){
 				printk("%s:%d  %s  can't get pinctrl \n",__func__,__LINE__,dev_name(&aml_chip->device));
 			}
 			else 
@@ -160,10 +160,12 @@ void   nand_get_chip(void *chip)
  void  nand_release_chip(void *chip)
 {
 	 struct amlnand_chip *aml_chip = (struct amlnand_chip *)chip;
-  	if(aml_chip->nand_pinctrl != NULL){
-
-	devm_pinctrl_put(aml_chip->nand_pinctrl);
-	aml_chip->nand_pinctrl = NULL;
+	 int ret;
+  	if(nand_idleflag){
+		ret = pinctrl_select_state(aml_chip->nand_pinctrl , aml_chip->nand_idlestate);
+		if(ret<0)
+			printk("select idle state error\n");
+		nand_idleflag=0;
 		mutex_unlock(&spi_nand_mutex);
 	}
 }

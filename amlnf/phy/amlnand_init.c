@@ -48,11 +48,33 @@ int amlnf_phy_init(unsigned char flag)
 	aml_nand_msg("amlnf_phy_init : amlnf init flag %d",aml_chip->init_flag);
 	aml_chip->nand_status = NAND_STATUS_NORMAL;
 	aml_nand_chip = aml_chip;
-	
+
 #ifndef AML_NAND_UBOOT
 	aml_chip->device = pdev->dev;
 #endif	
-
+#ifdef CONFIG_OF
+	aml_chip->nand_pinctrl = devm_pinctrl_get(&aml_chip->device);
+	if (IS_ERR(aml_chip->nand_pinctrl)){
+		printk("get pinctrl error\n");
+		return aml_chip->nand_pinctrl;
+	}
+	aml_chip->nand_rbstate=pinctrl_lookup_state(aml_chip->nand_pinctrl,"nand_rb_mod");
+	if (IS_ERR(aml_chip->nand_rbstate)) {
+		devm_pinctrl_put(aml_chip->nand_pinctrl);
+		return ERR_CAST(aml_chip->nand_rbstate);
+	}
+	aml_chip->nand_norbstate=pinctrl_lookup_state(aml_chip->nand_pinctrl,"nand_norb_mod");
+	if (IS_ERR(aml_chip->nand_norbstate)) {
+		devm_pinctrl_put(aml_chip->nand_pinctrl);
+			return ERR_CAST(aml_chip->nand_norbstate);
+	}
+	aml_chip->nand_idlestate=pinctrl_lookup_state(aml_chip->nand_pinctrl,"dummy");
+	if (IS_ERR(aml_chip->nand_idlestate)) {
+		devm_pinctrl_put(aml_chip->nand_pinctrl);
+		return ERR_CAST(aml_chip->nand_idlestate);
+	}
+#endif
+	
     	//Step 1: init hw controller    
 	ret = amlnand_hwcontroller_init(aml_chip);
 	if(ret < 0){

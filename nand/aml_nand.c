@@ -1937,10 +1937,12 @@ static int aml_nand_add_partition(struct aml_nand_chip *aml_chip)
 #endif
 }
 
+int nand_idleflag=0;
 static void aml_nand_select_chip(struct mtd_info *mtd, int chipnr)
 {
 	//int i;
 	int retry;
+	int ret=0;
 	DECLARE_WAITQUEUE(nand_wait, current);
 	struct aml_nand_chip *aml_chip = mtd_to_nand_chip(mtd);
 	if (((nand_erarly_suspend_flag == 1) && (!(READ_CBUS_REG(HHI_MPEG_CLK_CNTL)&(1<<8)))) 
@@ -1953,13 +1955,14 @@ static void aml_nand_select_chip(struct mtd_info *mtd, int chipnr)
 			nand_erarly_suspend_flag = 0;
 	}
 	
-		
 	switch (chipnr) {
 		case -1:
 		#ifdef CONFIG_OF
-			if(aml_chip->nand_pinctrl != NULL){
-				devm_pinctrl_put(aml_chip->nand_pinctrl);
-				aml_chip->nand_pinctrl = NULL;
+			if(nand_idleflag){
+				ret = pinctrl_select_state(nand_pinctrl , nand_idlestate);
+				if(ret<0)			
+					printk("%s:%d  %s  nand select idle state error \n",__func__,__LINE__,dev_name(aml_chip->device));
+				nand_idleflag=0;
 				mutex_unlock(&spi_nand_mutex);
 			}
 		#else
@@ -1968,19 +1971,20 @@ static void aml_nand_select_chip(struct mtd_info *mtd, int chipnr)
 			break;
 		case 0:
 		#ifdef CONFIG_OF
-		for (retry=0; retry<10; retry++) {
+		 for (retry=0; retry<10; retry++) {
 			mutex_lock(&spi_nand_mutex);
+			nand_idleflag=1;
 			if((aml_chip->ops_mode & AML_CHIP_NONE_RB) == 0)
-			aml_chip->nand_pinctrl = devm_pinctrl_get_select(aml_chip->device,"nand_rb_mod");
+				ret = pinctrl_select_state(nand_pinctrl , nand_rbstate);
 			else
-			aml_chip->nand_pinctrl = devm_pinctrl_get_select(aml_chip->device,"nand_norb_mod");
-			if (IS_ERR(aml_chip->nand_pinctrl)){
-				aml_chip->nand_pinctrl = NULL;
+				ret = pinctrl_select_state(nand_pinctrl , nand_norbstate);
+			if (ret<0){
+				nand_idleflag=0;
 				mutex_unlock(&spi_nand_mutex);
 				printk("%s:%d  %s  can't get pinctrl \n",__func__,__LINE__,dev_name(aml_chip->device));
 			}
-			else break; 
-		}
+			else break;
+		 }
 		if (retry == 10) return ;
 			aml_chip->aml_nand_select_chip(aml_chip, chipnr);
 		#else
@@ -6698,7 +6702,6 @@ int aml_nand_init(struct aml_nand_chip *aml_chip)
 	chip->dev_ready = aml_nand_dev_ready;
 	//chip->verify_buf = aml_nand_verify_buf;
 	chip->read_byte = aml_platform_read_byte;
-
 	aml_chip->chip_num = plat->platform_nand_data.chip.nr_chips;
 	//aml_chip->chip_num = 1;
 	printk("###plat->platform_nand_data.chip.nr_chips =%d\n",plat->platform_nand_data.chip.nr_chips);
