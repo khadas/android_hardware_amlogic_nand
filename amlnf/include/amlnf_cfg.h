@@ -1,5 +1,4 @@
 
-//#include "amlnf_dev.h"
 //#define	AML_NAND_UBOOT
 
 
@@ -18,11 +17,7 @@
 #define 	ADJUST_BLOCK_NUM	0
 #endif
 
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
-//#ifdef CONFIG_ARCH_MESON8
-#define CONFIG_NAND_AML_M8   
-#define	AML_NAND_DBG_M8
-#endif
+
 
 extern  int is_phydev_off_adjust(void); 
 extern  int get_adjust_block_num(void);
