@@ -341,6 +341,11 @@ static void aml_chip_rb_mode_confirm(struct amlnand_chip *aml_chip)
 		}		
 	}
 
+#ifdef AML_NAND_RB_IRQ
+    rb_mode = 1;
+    aml_nand_msg("force none rb mode for rb irq");
+#endif    
+
 	if(rb_mode){
 		controller->rb_enable[0] = 0;
 		controller->option |= NAND_CTRL_NONE_RB;

@@ -113,14 +113,25 @@ int amlphy_prepare(unsigned flag)
 int phydev_suspend(struct amlnand_phydev *phydev)
 {
     struct amlnand_chip *aml_chip = (struct amlnand_chip *)phydev->priv;	
+#ifdef AML_NAND_RB_IRQ    
+	unsigned long flags;
+#endif
     
 	if (!strncmp((char*)phydev->name, NAND_BOOT_NAME, strlen((const char*)NAND_BOOT_NAME)))
 		return 0;
 	aml_nand_dbg("phydev_suspend: entered!");
+#ifdef AML_NAND_RB_IRQ
+	spin_lock_irqsave(&amlnf_lock, flags);
+#else
 	spin_lock(&amlnf_lock);	
+#endif	
 	//set_chip_state(phydev, CHIP_PM_SUSPENDED);
 	set_chip_state(aml_chip, CHIP_PM_SUSPENDED);
-	spin_unlock(&amlnf_lock);
+#ifdef AML_NAND_RB_IRQ
+    spin_unlock_irqrestore(&amlnf_lock, flags);
+#else
+    spin_unlock(&amlnf_lock);	
+#endif	
 		return 0;
 
 }
@@ -177,23 +188,38 @@ void   nand_get_chip(void *chip)
  */
 int amlnand_get_device(struct amlnand_chip *aml_chip, chip_state_t new_state)
 {	
+#ifdef AML_NAND_RB_IRQ    
+	unsigned long flags;
+#endif
 
 	DECLARE_WAITQUEUE(wait, current);
 	
 retry:
-	spin_lock(&amlnf_lock);
+#ifdef AML_NAND_RB_IRQ
+	spin_lock_irqsave(&amlnf_lock, flags);
+#else
+	spin_lock(&amlnf_lock);	
+#endif
 
 	if (get_chip_state(aml_chip) == CHIP_READY) {
 		set_chip_state(aml_chip, new_state);	
-		spin_unlock(&amlnf_lock);
-		//set nand pinmux here
+#ifdef AML_NAND_RB_IRQ
+        spin_unlock_irqrestore(&amlnf_lock, flags);
+#else
+        spin_unlock(&amlnf_lock);	
+#endif		
+        //set nand pinmux here
 		nand_get_chip(aml_chip);	
 		return 0;
 	}
 	
 	set_current_state(TASK_UNINTERRUPTIBLE);
 	add_wait_queue(&amlnf_wq, &wait);
-	spin_unlock(&amlnf_lock);
+#ifdef AML_NAND_IRQ_MODE
+    spin_unlock_irqrestore(&amlnf_lock, flags);
+#else
+    spin_unlock(&amlnf_lock);	
+#endif
 	schedule();
 	remove_wait_queue(&amlnf_wq, &wait);
 	goto retry;
@@ -207,11 +233,23 @@ retry:
  */
 void amlnand_release_device(struct amlnand_chip *aml_chip)
 {
+#ifdef AML_NAND_RB_IRQ    
+	unsigned long flags;
+#endif
+    
 	/* Release the controller and the chip */
-	spin_lock(&amlnf_lock);
+#ifdef AML_NAND_RB_IRQ
+	spin_lock_irqsave(&amlnf_lock, flags);
+#else
+	spin_lock(&amlnf_lock);	
+#endif
 	set_chip_state(aml_chip, CHIP_READY);
 	wake_up(&amlnf_wq);
-	spin_unlock(&amlnf_lock);
+#ifdef AML_NAND_RB_IRQ
+    spin_unlock_irqrestore(&amlnf_lock, flags);
+#else
+    spin_unlock(&amlnf_lock);	
+#endif
 	//clear nand pinmux here
 	nand_release_chip(aml_chip);
 }

@@ -13,7 +13,7 @@
 #define NAND_COMPATIBLE_REGION     1
 #define NAND_RESERVED_REGION	       1
 #define NAND_ADDNEW_REGION	       1
-#define NAND_BUG_FIX_REGION	       4
+#define NAND_BUG_FIX_REGION	       5
 
 #define DRV_PHY_VERSION	   ((NAND_COMPATIBLE_REGION << 24)+(NAND_RESERVED_REGION << 16) \
 							+(NAND_ADDNEW_REGION << 8)+(NAND_BUG_FIX_REGION))	
@@ -241,6 +241,14 @@ typedef union nand_core_clk {
 #define	NAND_TRHW_TIME_CYCLE				20
 
 
+#ifdef AML_NAND_RB_IRQ	
+#define NAND_CHIP_UNDEFINE   200
+#endif
+
+#ifdef AML_NAND_RB_IRQ	
+#define DMA_TIME_CNT_220US      220000
+#define DMA_TIME_CNT_20US       20000
+#endif
 
 //#define	NAND_TWHR2_TIME_CYCLE				20
 
@@ -501,6 +509,10 @@ struct hw_controller{
 #endif
 	
     	struct bch_desc 	*bch_desc;
+    	
+#ifdef AML_NAND_DMA_POLLING
+    struct hrtimer		timer;
+#endif
 		
 #if 0//#ifndef AML_NAND_UBOOT
 	struct hw_ctrl hw_ctrl;	
@@ -516,6 +528,9 @@ struct hw_controller{
 	void (*writebyte)(struct hw_controller *controller, unsigned char data);
 	void	(*cmd_ctrl)(struct hw_controller *controller, unsigned cmd,  unsigned ctrl);
 	int (*quene_rb)(struct hw_controller *controller, unsigned char chipnr);
+#ifdef AML_NAND_RB_IRQ	
+	int (*quene_rb_irq)(struct hw_controller *controller, unsigned char chipnr);
+#endif	
 	int	(*dma_read)(struct hw_controller *controller, unsigned len, unsigned char bch_mode);		
 	int	(*dma_write)(struct hw_controller *controller, unsigned char *buf, unsigned len, unsigned char bch_mode);
 	int (*hwecc_correct)(struct hw_controller *controller, unsigned size, unsigned char *oob_buf);

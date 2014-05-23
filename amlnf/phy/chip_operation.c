@@ -313,8 +313,15 @@ RETRY_CMD:
 		
 		chipnr = (chip_num > 1) ? i : ops_para->chipnr;
 		retry_cnt = 0;
-RETRY_DMA:		
+RETRY_DMA:	
+#if 0//def AML_NAND_RB_IRQ    //disable rb irq for read 
+        if(i == 0)
+            ret = controller->quene_rb_irq(controller, chipnr);
+        else
+           ret = controller->quene_rb(controller, chipnr);
+#else
 		ret = controller->quene_rb(controller, chipnr);
+#endif
 		if(ret){
 			aml_nand_msg("quene rb busy here");
 			goto error_exit0;
@@ -1226,7 +1233,14 @@ static int write_page(struct amlnand_chip *aml_chip)
 		
 		chipnr = (chip_num > 1) ? i : ops_para->chipnr;
 		st_cnt = 0;	
+#ifdef AML_NAND_RB_IRQ    	
+        if(i == 0)
+            ret = controller->quene_rb_irq(controller, chipnr);
+        else
+           ret = controller->quene_rb(controller, chipnr);
+#else
 		ret = controller->quene_rb(controller, chipnr);
+#endif
 		if(ret){
 			aml_nand_msg("quene rb busy here");
 			goto error_exit0;
@@ -1691,7 +1705,14 @@ static int erase_block(struct amlnand_chip *aml_chip)
 		
 		chipnr = (chip_num > 1) ? i : ops_para->chipnr;
         st_cnt = 0;
+#ifdef AML_NAND_RB_IRQ    	
+        if(i == 0)
+            ret = controller->quene_rb_irq(controller, chipnr);
+        else
+           ret = controller->quene_rb(controller, chipnr);
+#else
 		ret = controller->quene_rb(controller, chipnr);
+#endif
 		if(ret){
 			aml_nand_msg("quene rb busy here, chipnr:%d, page_addr:%d", chipnr, controller->page_addr);
 			goto error_exit0;

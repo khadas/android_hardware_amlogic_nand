@@ -90,6 +90,12 @@
 #define NFC_SET_DMA_MODE(is_apb,spare_only)             		AMLNF_WRITE_REG_BITS(P_NAND_CFG,((spare_only<<1)|(is_apb)),14,2)
 #define NFC_SET_OOB_MODE(mode)						AMLNF_SET_REG_MASK(P_NAND_CFG,mode);
 #define NFC_CLR_OOB_MODE(mode)						AMLNF_CLEAR_REG_MASK(P_NAND_CFG,mode);
+
+#define NFC_ENABLE_STS_IRQ()      							AMLNF_SET_REG_MASK(P_NAND_CFG,1<<20)
+#define NFC_DISABLE_STS_IRQ()      							AMLNF_CLEAR_REG_MASK(P_NAND_CFG,1<<20)
+
+#define NFC_ENABLE_IO_IRQ()      							AMLNF_SET_REG_MASK(P_NAND_CFG,1<<21)
+#define NFC_DISABLE_IO_IRQ()      							AMLNF_CLEAR_REG_MASK(P_NAND_CFG,1<<21)
 													
 /**
     Register Operation and Controller Status 
@@ -170,6 +176,7 @@
 #define NFC_CMD_RB(ce,time )          			((ce)|RB  |(time&0x1f))
 #define NFC_CMD_RB_INT(ce,time)        		((ce)|RB|(((ce>>10)^0xf)<<14)|(time&0x1f))
 #define NFC_CMD_RBIO(time,io)		   		(RB|io|(time&0x1f))	
+#define NFC_CMD_RBIO_IRQ(time)		   		(RB|IO6|(1<<16)|(time&0x1f))	
 #define NFC_CMD_RBIO_INT(io,time)      		(RB|(((io>>10)^0x7)<<14)|(time&0x1f))
 #define NFC_CMD_SEED(seed)			   		(SEED|(SEED_OFFSET + (seed&0x7fff)))
 #define NFC_CMD_STS(tim) 			   		(STS|(tim&3))
@@ -232,6 +239,7 @@
 
 #define NFC_SEND_CMD_STS(time, irq)          				NFC_SEND_CMD(NFC_CMD_STS(time |irq))
 
+#define NFC_SEND_CMD_RB_IRQ(time)          				NFC_SEND_CMD(NFC_CMD_RBIO_IRQ(time))
 
 /**
     Cmd Info Macros

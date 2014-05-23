@@ -17,7 +17,8 @@
 #define 	ADJUST_BLOCK_NUM	0
 #endif
 
-
+#define AML_NAND_RB_IRQ
+//#define AML_NAND_DMA_POLLING
 
 extern  int is_phydev_off_adjust(void); 
 extern  int get_adjust_block_num(void);

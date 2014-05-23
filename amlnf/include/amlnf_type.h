@@ -56,6 +56,17 @@
 #include <linux/vmalloc.h>
 #include <linux/mutex.h>
 
+#ifdef AML_NAND_RB_IRQ
+#include <mach/irqs.h>
+#include <linux/interrupt.h>
+#endif
+
+#ifdef AML_NAND_DMA_POLLING
+#ifdef CONFIG_HIGH_RES_TIMERS
+#include <linux/ktime.h>
+#include <linux/hrtimer.h>
+#endif
+#endif
 
 #endif
 
