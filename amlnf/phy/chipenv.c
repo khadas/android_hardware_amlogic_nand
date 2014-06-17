@@ -7,6 +7,8 @@ extern  int block_markbad(struct amlnand_chip *aml_chip);
 #ifdef AML_NAND_UBOOT
 //extern struct amlnf_partition amlnand_config;
 extern struct amlnf_partition * amlnand_config;
+int get_last_reserve_block(struct amlnand_chip *aml_chip);
+int repair_reserved_bad_block(struct amlnand_chip *aml_chip);
 
 /***
 *erase whole nand as scrub
@@ -291,6 +293,188 @@ exit:
 	return ret;
 }
 
+int get_last_reserve_block(struct amlnand_chip *aml_chip)
+{
+	struct hw_controller *controller = &aml_chip->controller;
+	struct chip_operation *operation = & aml_chip->operation;
+	struct chip_ops_para  *ops_para = &aml_chip->ops_para; 
+	struct nand_flash *flash = &aml_chip->flash;
+	
+	unsigned int offset, start_blk, total_blk, blk_addr, tmp_blk, pages_per_blk;
+	unsigned char phys_erase_shift, phys_page_shift;
+	int  ret =0;
+	
+	offset = (1024 * flash->pagesize);
+
+	phys_erase_shift = ffs(flash->blocksize) - 1;
+	phys_page_shift =  ffs(flash->pagesize) - 1;
+	pages_per_blk = (1 << (phys_erase_shift -phys_page_shift));
+	memset((unsigned char *)ops_para, 0x0, sizeof(struct chip_ops_para));
+
+	start_blk = (offset >> phys_erase_shift);
+	tmp_blk = total_blk = start_blk;
+
+	blk_addr = 0;
+	//decide the total block_addr
+	while(blk_addr < RESERVED_BLOCK_CNT){
+		
+		memset((unsigned char *)ops_para, 0x0, sizeof(struct chip_ops_para));	
+		ops_para->page_addr =(((total_blk - total_blk % controller->chip_num) /controller->chip_num) + tmp_blk -tmp_blk/controller->chip_num) * pages_per_blk;
+		ops_para->chipnr = total_blk % controller->chip_num;
+		controller->select_chip(controller, ops_para->chipnr );
+				
+		ret = operation->block_isbad(aml_chip);
+		if(ret ==  NAND_BLOCK_FACTORY_BAD){
+			aml_nand_msg("nand blk %d is shipped bad block ", total_blk);
+			total_blk++;
+			continue;
+		}	
+		total_blk++;
+		blk_addr++;
+	}
+		
+	return total_blk;
+}
+int repair_reserved_bad_block(struct amlnand_chip *aml_chip)
+{
+    struct hw_controller *controller = &aml_chip->controller;
+    struct chip_operation *operation = & aml_chip->operation;
+    struct chip_ops_para  *ops_para = &aml_chip->ops_para; 
+    struct nand_flash *flash = &aml_chip->flash;
+    
+    unsigned int offset, start_blk, total_blk, blk_addr, tmp_blk, pages_per_blk,blk_used_bad_cnt = 0;
+    unsigned char phys_erase_shift, phys_page_shift;
+    int  ret =0,i = 0,j = 0;
+    uint32_t bad_blk[128];
+    memset(bad_blk,0,128*sizeof(uint32_t));
+    offset = (1024 * flash->pagesize);
+
+    phys_erase_shift = ffs(flash->blocksize) - 1;
+    phys_page_shift =  ffs(flash->pagesize) - 1;
+    pages_per_blk = (1 << (phys_erase_shift -phys_page_shift));
+    memset((unsigned char *)ops_para, 0x0, sizeof(struct chip_ops_para));
+
+    start_blk = (offset >> phys_erase_shift);
+    tmp_blk = total_blk = start_blk;
+
+	unsigned char *dat_buf =NULL;
+    unsigned char *oob_buf =NULL;
+	dat_buf  = aml_nand_malloc(flash->pagesize);
+	if(!dat_buf){
+		aml_nand_msg("amlnand_free_block_test : malloc failed");
+		ret =  -1;
+		return ret;
+	}
+	memset(dat_buf, 0, flash->pagesize);
+	oob_buf  = aml_nand_malloc(flash->oobsize);
+	if(!oob_buf){
+		aml_nand_msg("amlnand_free_block_test : malloc failed");
+		ret =  -1;
+		return ret;
+	}
+	memset(oob_buf, 0, flash->oobsize);
+
+    blk_addr = 0;
+    //decide the total block_addr
+    while(blk_addr < RESERVED_BLOCK_CNT){
+        
+        memset((unsigned char *)ops_para, 0x0, sizeof(struct chip_ops_para));   
+        ops_para->page_addr =(((total_blk - total_blk % controller->chip_num) /controller->chip_num) + tmp_blk -tmp_blk/controller->chip_num) * pages_per_blk;
+        ops_para->chipnr = total_blk % controller->chip_num;
+        controller->select_chip(controller, ops_para->chipnr );
+                
+        ret = operation->block_isbad(aml_chip);
+        if(ret ==  NAND_BLOCK_FACTORY_BAD){
+            aml_nand_msg("nand blk %d is shipped bad block ", total_blk);
+            total_blk++;
+            continue;
+        }
+        if(ret == NAND_BLOCK_USED_BAD)
+        {
+            if(blk_used_bad_cnt < 128){
+            bad_blk[blk_used_bad_cnt] = total_blk;
+            blk_used_bad_cnt++;
+            }
+        }
+        total_blk++;
+        blk_addr++;
+    }
+    if(blk_used_bad_cnt>6)
+    {
+        #ifdef AML_NAND_UBOOT
+			nand_get_chip();
+        #else
+    		nand_get_chip(aml_chip);
+        #endif	
+        aml_nand_msg("repair bad block of reserved,blk_used_bad_cnt=%d\n",blk_used_bad_cnt);
+        for(i=0;i<blk_used_bad_cnt;i++){
+            memset((unsigned char *)ops_para, 0x0, sizeof(struct chip_ops_para));   
+            ops_para->page_addr =(((bad_blk[i] - bad_blk[i] % controller->chip_num) /controller->chip_num) + tmp_blk -tmp_blk/controller->chip_num) * pages_per_blk;
+            ops_para->chipnr = bad_blk[i] % controller->chip_num;
+            controller->select_chip(controller, ops_para->chipnr );
+            ret = operation->blk_modify_bbt_chip_op(aml_chip,0);
+            //erase
+            ret = operation->erase_block(aml_chip);
+            if(ret){
+                ret = operation->blk_modify_bbt_chip_op(aml_chip,1);
+                aml_nand_msg("test blk %d fail\n",bad_blk[i]);
+                continue;
+            }
+            //write
+            ops_para->page_addr =(((bad_blk[i] - bad_blk[i] % controller->chip_num) /controller->chip_num) + tmp_blk -tmp_blk/controller->chip_num) * pages_per_blk;
+            ops_para->data_buf = dat_buf;
+            ops_para->oob_buf = oob_buf;
+            for(j=0;j<pages_per_blk;j++)
+            {
+                ops_para->page_addr += 1;
+                memset(dat_buf, 0, flash->pagesize);
+                memset(oob_buf, 0, flash->oobsize);
+                ret = operation->write_page(aml_chip);
+                if(ret){
+                    ops_para->page_addr =(((bad_blk[i] - bad_blk[i] % controller->chip_num) /controller->chip_num) + tmp_blk -tmp_blk/controller->chip_num) * pages_per_blk;
+                    ret = operation->blk_modify_bbt_chip_op(aml_chip,1);
+                    aml_nand_msg("test blk %d fail\n",bad_blk[i]);
+                    goto write_read_fail;
+                }
+            }
+            //read
+            ops_para->page_addr =(((bad_blk[i] - bad_blk[i] % controller->chip_num) /controller->chip_num) + tmp_blk -tmp_blk/controller->chip_num) * pages_per_blk;
+            ops_para->data_buf = dat_buf;
+            ops_para->oob_buf = oob_buf;
+            for(j=0;j<pages_per_blk;j++)
+            {
+                ops_para->page_addr += 1;
+                memset(dat_buf, 0, flash->pagesize);
+                memset(oob_buf, 0, flash->oobsize);
+                ret = operation->read_page(aml_chip);
+                if((ops_para->ecc_err) || (ret < 0)){
+                    ops_para->page_addr =(((bad_blk[i] - bad_blk[i] % controller->chip_num) /controller->chip_num) + tmp_blk -tmp_blk/controller->chip_num) * pages_per_blk;
+                    ret = operation->blk_modify_bbt_chip_op(aml_chip,1);
+                    aml_nand_msg("test blk %d fail\n",bad_blk[i]);
+                    goto write_read_fail;
+                }
+            }
+            //erase
+            ops_para->page_addr =(((bad_blk[i] - bad_blk[i] % controller->chip_num) /controller->chip_num) + tmp_blk -tmp_blk/controller->chip_num) * pages_per_blk;
+            ret = operation->erase_block(aml_chip);
+            if(ret){
+                ret = operation->blk_modify_bbt_chip_op(aml_chip,1);
+                aml_nand_msg("test blk %d fail\n",bad_blk[i]);
+                continue;
+            }
+            aml_nand_msg("test blk %d OK\n",bad_blk[i]);
+write_read_fail:
+            ;
+        }
+        #ifdef AML_NAND_UBOOT
+			nand_release_chip();
+        #else
+			nand_release_chip(aml_chip);
+        #endif
+        amlnand_update_bbt(aml_chip);
+    }
+    return total_blk;
+}
 /*****************************************************************************
 *Name         :amlnand_get_free_block
 *Description :search a good block by skip the shipped bad block 
@@ -298,8 +482,9 @@ exit:
 *Return       :
 *Note          :
 *****************************************************************************/
-int amlnand_get_free_block(struct amlnand_chip *aml_chip)
-{	struct hw_controller *controller = &aml_chip->controller;
+int amlnand_get_free_block(struct amlnand_chip *aml_chip,unsigned int block)
+{	
+	struct hw_controller *controller = &aml_chip->controller;
 	struct chip_operation *operation = & aml_chip->operation;
 	struct chip_ops_para  *ops_para = &aml_chip->ops_para; 
 	struct nand_flash *flash = &aml_chip->flash;
@@ -327,38 +512,10 @@ int amlnand_get_free_block(struct amlnand_chip *aml_chip)
 
 	start_blk = (offset >> phys_erase_shift);
 	tmp_blk = total_blk = start_blk;
-	aml_nand_dbg("start_blk = %d",start_blk);	
-	aml_nand_dbg("total_blk = %d",total_blk);	
-	aml_nand_dbg("pages_per_blk = %d",pages_per_blk);
 
-	blk_addr = 0;
-	//decide the total block_addr
-	while(blk_addr < RESERVED_BLOCK_CNT){
-		
-		memset((unsigned char *)ops_para, 0x0, sizeof(struct chip_ops_para));	
-		ops_para->page_addr =(((total_blk - total_blk % controller->chip_num) /controller->chip_num) + tmp_blk -tmp_blk/controller->chip_num) * pages_per_blk;
-		ops_para->chipnr = total_blk % controller->chip_num;
-		controller->select_chip(controller, ops_para->chipnr );
-				
-		ret = operation->block_isbad(aml_chip);
-		if(ret ==  NAND_BLOCK_FACTORY_BAD){
-			aml_nand_msg("nand blk %d is shipped bad block ", total_blk);
-			total_blk++;
-			continue;
-		}	
-		total_blk++;
-		blk_addr++;
-	}
-	aml_nand_dbg(" total blk_addr = %d",total_blk);
-	
+	total_blk = get_last_reserve_block(aml_chip);
 	blk_addr = 0;
 	while((blk_addr < 1) && (start_blk < total_blk )){
-#if 0
-		//display 
-		for(i=0; i<RESERVED_BLOCK_CNT;  i++){
-			aml_nand_dbg("aml_chip->reserved_blk[%d]=%d ",i, aml_chip->reserved_blk[i] );			
-		}
-#endif		
 		for(i=0; i<RESERVED_BLOCK_CNT;  i++){
 			if(aml_chip->reserved_blk[i] == start_blk){
 				//aml_nand_msg("nand blk %d is used", start_blk);
@@ -370,6 +527,10 @@ int amlnand_get_free_block(struct amlnand_chip *aml_chip)
 			}
 		}
 		if(blk_used_flag){		
+			start_blk++;
+			continue;
+		}
+        if(block == start_blk){
 			start_blk++;
 			continue;
 		}
@@ -579,11 +740,11 @@ int amlnand_save_info_by_name(struct amlnand_chip *aml_chip,unsigned char * info
 	nand_arg_info * arg_info = (struct _nand_arg_info *)info;
 	 nand_arg_oobinfo * arg_oob_info; 
 	
-	unsigned int len, offset, offset_tmp, nand_boot, blk_addr,tmp_blk_addr,  amount_saved =0, pages_per_blk, arg_pages, pages_read;
+	unsigned int len, offset, offset_tmp, nand_boot, blk_addr=0,tmp_blk_addr,  amount_saved =0, pages_per_blk, arg_pages, pages_read;
 	unsigned char phys_erase_shift, phys_page_shift;
 	unsigned char  oob_buf[sizeof(struct _nand_arg_oobinfo)];
 	unsigned short tmp_blk;
-	int full_page_flag=0, ret = 0, i;
+	int full_page_flag=0, ret = 0, i,test_cnt = 0,extra_page = 0;
 	
 	nand_boot = 1;
 	/*if(boot_device_flag == 0){
@@ -599,7 +760,17 @@ int amlnand_save_info_by_name(struct amlnand_chip *aml_chip,unsigned char * info
 	phys_erase_shift = ffs(flash->blocksize) - 1;
 	phys_page_shift =  ffs(flash->pagesize) - 1;
 	pages_per_blk = (1 << (phys_erase_shift -phys_page_shift));
+    aml_nand_msg("size:%d",size);
 	arg_pages = ((size>>phys_page_shift) + 1);
+    aml_nand_msg("arg_pages:%d",arg_pages);
+    if((size%flash->pagesize)==0)
+    {
+        extra_page = 1;
+    }else
+    {
+        extra_page = 0;
+    }
+    aml_nand_msg("extra_page:%d",extra_page);
 	tmp_blk = (offset >> phys_erase_shift);
 	
 	if((flash->new_type) &&((flash->new_type < 10)||(flash->new_type == SANDISK_19NM)))
@@ -629,25 +800,27 @@ int amlnand_save_info_by_name(struct amlnand_chip *aml_chip,unsigned char * info
 	aml_nand_dbg(" bbt_oob_info: %x %x %x %x %x %x %x %x", \
 		bbt_oob_info[0], bbt_oob_info[1], bbt_oob_info[2], bbt_oob_info[3], bbt_oob_info[4], bbt_oob_info[5], bbt_oob_info[6], bbt_oob_info[7]);
 #endif
-
+get_free_blk:
 //get new block according to arg_type or update_flag
 	if((arg_info->arg_valid)&&(!arg_info->update_flag) && (arg_info->arg_type == FULL_PAGE)){
 
 		if((arg_info->valid_page_addr + 2* arg_pages) > pages_read){
-			blk_addr = amlnand_get_free_block(aml_chip);
-					if( blk_addr < 0){
-						aml_nand_msg("nand get free blcok failed"); 
-						ret = - NAND_BAD_BLCOK_FAILURE;
-						goto exit_error0;
-					}
-					aml_nand_dbg("nand get free blcok  at %d",blk_addr); 
+			ret = amlnand_get_free_block(aml_chip,blk_addr);
+            blk_addr = ret;
+			if( ret < 0){
+				aml_nand_msg("nand get free blcok failed"); 
+				ret = - NAND_BAD_BLCOK_FAILURE;
+				goto exit_error0;
+			}
+			aml_nand_dbg("nand get free blcok  at %d",blk_addr); 
 			full_page_flag = 1;
 		}else{
 			blk_addr = arg_info->valid_blk_addr;
 		}
 	}else{
-		blk_addr = amlnand_get_free_block(aml_chip);
-		if( blk_addr < 0){
+		ret = amlnand_get_free_block(aml_chip,blk_addr);
+        blk_addr = ret;
+		if( ret < 0){
 			aml_nand_msg("nand get free blcok failed"); 
 			ret = - NAND_BAD_BLCOK_FAILURE;
 			goto exit_error0;
@@ -662,7 +835,7 @@ int amlnand_save_info_by_name(struct amlnand_chip *aml_chip,unsigned char * info
 					break;
 				offset_tmp =0;
 				amount_saved = 0;
-				while(amount_saved < size){
+				while(amount_saved < (size+extra_page*flash->pagesize)){
 					
 					memset((unsigned char *)ops_para, 0x0, sizeof(struct chip_ops_para));
 					if((flash->new_type) &&((flash->new_type < 10)||(flash->new_type == SANDISK_19NM)))
@@ -683,7 +856,7 @@ int amlnand_save_info_by_name(struct amlnand_chip *aml_chip,unsigned char * info
 					ops_para->oob_buf = aml_chip->user_oob_buf;
 					ops_para->ooblen = sizeof(oob_buf);
 		
-					len = min(flash->pagesize, size - amount_saved);
+					len = min(flash->pagesize, size + extra_page*flash->pagesize - amount_saved);
 					memset(aml_chip->user_page_buf, 0x0, flash->pagesize);		
 					memset(aml_chip->user_oob_buf, 0x0,sizeof(oob_buf));
 					memcpy((unsigned char *)aml_chip->user_page_buf, ((unsigned char *)(buf) + amount_saved), len);
@@ -707,12 +880,21 @@ int amlnand_save_info_by_name(struct amlnand_chip *aml_chip,unsigned char * info
 					nand_release_chip(aml_chip);
 #endif	
 					if(ret < 0){
-						aml_nand_msg("nand write failed");
-						ret = operation->block_markbad(aml_chip);
-						if(ret < 0){
-							aml_nand_msg("nand mark bad block failed at blk %d", blk_addr); 				
-						}
-						break;
+						printk("nand write failed\n");
+                        if(test_cnt>=3){
+                            printk("test block 3 times, operating environment maybe wrong!\n");
+                            break;
+                        }
+                        ret = operation->test_block_reserved(aml_chip,blk_addr);
+                        test_cnt++;
+                        if(ret){
+    						ret = operation->block_markbad(aml_chip);
+    						if(ret < 0){
+    							aml_nand_msg("nand mark bad block failed at blk %d", blk_addr); 				
+    						}
+                        }
+						printk("rewrite!\n");
+						goto get_free_blk;
 					}
 					offset_tmp += 1;
 					amount_saved += flash->pagesize;
@@ -729,7 +911,7 @@ int amlnand_save_info_by_name(struct amlnand_chip *aml_chip,unsigned char * info
 		
 		offset_tmp =0;
 		amount_saved = 0;
-		while(amount_saved < size){
+		while(amount_saved < size+extra_page*flash->pagesize){
 			memset((unsigned char *)ops_para, 0x0, sizeof(struct chip_ops_para));
 			if((flash->new_type) &&((flash->new_type < 10)||(flash->new_type == SANDISK_19NM)))
 				ops_para->option |= DEV_SLC_MODE;
@@ -753,7 +935,7 @@ int amlnand_save_info_by_name(struct amlnand_chip *aml_chip,unsigned char * info
 			ops_para->oob_buf = aml_chip->user_oob_buf;
 			ops_para->ooblen = sizeof(oob_buf);
 
-			len = min(flash->pagesize, size - amount_saved);
+			len = min(flash->pagesize, size + extra_page*flash->pagesize - amount_saved);
 			memset(aml_chip->user_page_buf, 0x0, flash->pagesize);		
 			memset(aml_chip->user_oob_buf, 0x0,sizeof(oob_buf));
 			memcpy((unsigned char *)aml_chip->user_page_buf, ((unsigned char *)(buf) + amount_saved), len);
@@ -774,11 +956,19 @@ int amlnand_save_info_by_name(struct amlnand_chip *aml_chip,unsigned char * info
 #endif	
 			if(ret < 0){
 				aml_nand_msg("nand write failed");
-				ret = operation->block_markbad(aml_chip);
-				if(ret < 0){
-					aml_nand_msg("nand mark bad block failed at blk %d", blk_addr); 				
-				}
-				break;
+                 if(test_cnt>=3){
+                    printk("test block 3 times, operating environment maybe wrong!\n");
+                    break;
+                    }
+                    ret = operation->test_block_reserved(aml_chip,blk_addr);
+                    test_cnt++;
+                    if(ret){
+        				ret = operation->block_markbad(aml_chip);
+        				if(ret < 0){
+        					aml_nand_msg("nand mark bad block failed at blk %d", blk_addr); 				
+            				}
+                        }
+				goto get_free_blk;
 			}
 			offset_tmp += 1;
 			amount_saved += flash->pagesize;
@@ -847,10 +1037,19 @@ int amlnand_save_info_by_name(struct amlnand_chip *aml_chip,unsigned char * info
 #endif	
 					if(ret < 0){
 						aml_nand_msg("nand blk %d erase failed", tmp_blk_addr);
+                        ret = operation->test_block_reserved(aml_chip,tmp_blk_addr);
+                        if(ret){
 						ret = operation->block_markbad(aml_chip);
 						if(ret < 0){
 							aml_nand_msg("nand mark bad failed at blk %d",tmp_blk_addr);					
 							goto exit_error0;
+    						}
+                        }
+					}
+					for(i=0; i<RESERVED_BLOCK_CNT;i++){
+						if(aml_chip->reserved_blk[i] == tmp_blk_addr){
+							aml_chip->reserved_blk[i] = 0xff;
+							break;
 						}
 					}
 #if 0
@@ -858,12 +1057,6 @@ int amlnand_save_info_by_name(struct amlnand_chip *aml_chip,unsigned char * info
 						aml_nand_dbg("aml_chip->reserved_blk[%d]=%d ",i, aml_chip->reserved_blk[i] );			
 					}
 #endif			
-				}
-				for(i=0; i<RESERVED_BLOCK_CNT;i++){
-					if(aml_chip->reserved_blk[i] == tmp_blk_addr){
-						aml_chip->reserved_blk[i] = 0xff;
-						break;
-					}
 				}
 			}
 		arg_info->arg_valid = 1;   //SAVE SET VALID
@@ -1267,8 +1460,8 @@ int amlnand_info_init(struct amlnand_chip *aml_chip,unsigned char * info,unsigne
 		ret = aml_info_check_datasum(buf,name);
 		if(ret < 0){
 			aml_nand_msg("amlnand_info_init  : nand check read %s failed",name);
-			ret = 0;
-			//goto exit_error;
+			//ret = 0;
+			goto exit_error;
 		}
 	}else{
 		aml_nand_msg("found NO arg : %s info",name);
@@ -1630,12 +1823,12 @@ int aml_nand_save_hynix_info(struct amlnand_chip *aml_chip)
 	struct en_slc_info *slc_info = &(controller->slc_info);
 
 	unsigned char phys_erase_shift, phys_page_shift;	
-	unsigned short  blk_addr,  tmp_blk,  nand_boot;
+	unsigned short  blk_addr=0,  tmp_blk,  nand_boot;
 	unsigned i, j, k,offset,  pages_per_blk,pages_read;
 	unsigned char oob_buf [8] ;
 	int ret = 0;
 	unsigned tmp_addr;
-	int save_cnt =20;
+	int save_cnt =20,test_cnt = 0;
 
 	if(retry_info->retry_cnt_lp > 20)
 		save_cnt = retry_info->retry_cnt_lp;
@@ -1671,9 +1864,10 @@ int aml_nand_save_hynix_info(struct amlnand_chip *aml_chip)
 
 	memset((unsigned char *)ops_para, 0x0, sizeof(struct chip_ops_para));
 	memcpy(oob_buf, HYNIX_DEV_HEAD_MAGIC, strlen(HYNIX_DEV_HEAD_MAGIC));
-
-	blk_addr = amlnand_get_free_block (aml_chip);
-	if(blk_addr < 0){
+get_free_blk:
+	ret = amlnand_get_free_block (aml_chip,blk_addr);
+    blk_addr = ret;
+	if(ret < 0){
 		aml_nand_msg("nand get free block failed");
 		ret = - NAND_BAD_BLCOK_FAILURE;
 		goto exit_error0;
@@ -1747,11 +1941,19 @@ int aml_nand_save_hynix_info(struct amlnand_chip *aml_chip)
 #endif	
 		if(ret < 0){
 			aml_nand_msg("aml_nand_save_hynix_info : nand write failed");
-			ret = operation->block_markbad(aml_chip);
-			if(ret < 0){
-				aml_nand_dbg("nand mark bad block failed at blk %d", blk_addr); 				
-			}
-			break;
+            if(test_cnt>=3){
+                printk("test block 3 times, operating environment maybe wrong!\n");
+                break;
+                }
+                ret = operation->test_block_reserved(aml_chip,blk_addr);
+                test_cnt++;
+                if(ret){
+    			ret = operation->block_markbad(aml_chip);
+    			if(ret < 0){
+    				aml_nand_dbg("nand mark bad block failed at blk %d", blk_addr); 				
+        			}
+                }
+			goto get_free_blk;
 		}
 
 	}
@@ -2297,7 +2499,7 @@ int amlnand_get_dev_configs(struct amlnand_chip *aml_chip)
 	ret = amlnand_info_init(aml_chip, &(aml_chip->nand_bbtinfo),aml_chip->block_status,BBT_HEAD_MAGIC, sizeof(struct block_status));
 	if(ret < 0){
 		aml_nand_msg("nand scan bbt info  failed :%d",ret);		
-		goto exit_error0;
+		//goto exit_error0;
 	}
 
 	if(aml_chip->nand_bbtinfo.arg_valid == 0){ // bbt invalid
@@ -2305,7 +2507,7 @@ int amlnand_get_dev_configs(struct amlnand_chip *aml_chip)
 		ret = amlnand_info_init(aml_chip, &(aml_chip->shipped_bbtinfo),aml_chip->shipped_bbt_ptr,SHIPPED_BBT_HEAD_MAGIC, sizeof(struct shipped_bbt));
 		if(ret < 0){
 			aml_nand_msg("nand scan shipped info failed and ret:%d",ret);
-			goto exit_error0;
+			//goto exit_error0;
 		}
 		
 		if(aml_chip->shipped_bbtinfo.arg_valid == 0){	// ship bbt invalid
@@ -2405,7 +2607,23 @@ int amlnand_get_dev_configs(struct amlnand_chip *aml_chip)
 		ret = amlnand_info_init(aml_chip, &(aml_chip->config_msg),aml_chip->config_ptr,CONFIG_HEAD_MAGIC, sizeof(struct nand_config));
 		if(ret < 0){
 			aml_nand_msg("nand scan config failed and ret:%d",ret);	
-			goto exit_error0;
+			//goto exit_error0;
+#ifdef AML_NAND_UBOOT	
+			//save config	
+			aml_nand_msg("save config when can't find ncfg from nand");	
+			aml_chip->config_ptr->driver_version = DRV_PHY_VERSION;
+			aml_chip->config_ptr->fbbt_blk_addr = aml_chip->shipped_bbtinfo.valid_blk_addr;	
+			amlnand_get_dev_num(aml_chip,(struct amlnf_partition *)amlnand_config);
+			
+			aml_chip->config_ptr->crc = aml_info_checksum(aml_chip->config_ptr->dev_para,(MAX_DEVICE_NUM*sizeof(struct dev_para)));					
+			ret = amlnand_save_info_by_name(aml_chip, &(aml_chip->config_msg),aml_chip->config_ptr,CONFIG_HEAD_MAGIC, sizeof(struct nand_config));
+			if(ret < 0){
+				aml_nand_msg("nand save config failed and ret:%d",ret);			
+				goto exit_error0;
+			}
+#else
+            goto exit_error0;
+#endif
 		}
 		
 #ifdef AML_NAND_UBOOT	
@@ -2464,7 +2682,7 @@ int amlnand_get_dev_configs(struct amlnand_chip *aml_chip)
 
 
 #endif
-
+    repair_reserved_bad_block(aml_chip);
 	return ret ;
 	
 exit_error0:

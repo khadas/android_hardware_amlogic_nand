@@ -76,6 +76,11 @@
 #define	AML_NAND_DBG_M8
 #endif
 
+#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8B
+//#ifdef CONFIG_ARCH_MESON8
+#define CONFIG_NAND_AML_M8B   
+#endif
+
 //#define aml_nftl_malloc(n)		kzalloc(n, GFP_KERNEL)
 //#define aml_nftl_free			kfree
 
