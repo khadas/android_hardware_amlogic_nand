@@ -1279,7 +1279,7 @@ int amlnand_phydev_init(struct amlnand_chip *aml_chip)
 						#ifdef CONFIG_NAND_AML_M8B						
 						total_blk = total_blk + (total_blk + ADJUST_PART_SIZE - 1) /ADJUST_PART_SIZE + ADJUST_BLOCK_NUM;
 						#else
-						total_blk = dev_size  >> phydev->erasesize_shift;
+						total_blk = total_blk + total_blk /ADJUST_PART_SIZE + ADJUST_BLOCK_NUM;
 						#endif
 					}
 					memset(ops_para, 0, sizeof(struct chip_ops_para));
