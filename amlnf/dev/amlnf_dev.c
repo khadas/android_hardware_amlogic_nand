@@ -64,7 +64,7 @@ static struct class_attribute phydev_class_attrs[] = {
     __ATTR(version,       S_IRUGO | S_IWUSR, show_amlnf_version_info,    NULL),
     __ATTR_NULL
 };
-
+#if 0
 static struct class_attribute logicdev_class_attrs[] = {
     __ATTR(part,  S_IRUGO , show_part_struct,    NULL),
     __ATTR(list,  S_IRUGO , show_list,    NULL),
@@ -78,7 +78,7 @@ static struct class_attribute nfdev_class_attrs[] = {
     __ATTR(debug,  S_IRUGO , nfdev_debug,    NULL),
     __ATTR_NULL
 };
-
+#endif
 /*****************************************************************************
 *Name         :
 *Description  :
@@ -105,14 +105,14 @@ static int phydev_cls_resume(struct device *dev, pm_message_t state)
 		return 0;
 }
 
-
+#if 0
 static struct class phydev_class = {
 	.name = "amlphydev",
 	.owner = THIS_MODULE,
 	.suspend = phydev_cls_suspend,
 	.resume = phydev_cls_resume,
 };
-
+#endif
 int amlnf_pdev_register(struct amlnand_phydev *phydev)
 {
 	int ret = 0;
@@ -191,7 +191,7 @@ static const struct block_device_operations amlnf_blk_ops = {
  int amlnf_logic_init(unsigned flag)
  {
 	 struct amlnand_phydev *phydev = NULL;
-	 int i,ret=0;
+	 int ret=0;
 	 aml_nand_msg("amlnand_add_nftl:");
 	 //amlnand_show_dev_partition(aml_chip);
 	 list_for_each_entry(phydev, &nphy_dev_list, list){
@@ -250,7 +250,7 @@ static ssize_t nand_part_table_get(struct class *class, struct class_attribute *
 	struct nand_config *config = NULL;
 	struct dev_para *dev_paramt = NULL;
 	struct partitions *part_table = NULL;
-	int i=0,j=0,k=0,m=0, tmp_num =0,dev_num = PHY_DEV_NUM;
+	int i=0,j=0,k=0,m=0, tmp_num =0;
 
 	list_for_each_entry(phydev, &nphy_dev_list, list){
 		if ((phydev != NULL)  && 
@@ -359,7 +359,7 @@ static struct class_attribute aml_store_device =
 int amlnf_dev_init(unsigned flag)
 {
 	struct amlnand_phydev *phydev = NULL;
-	struct amlnf_dev* nf_dev = NULL;
+//	struct amlnf_dev* nf_dev = NULL;
 	struct class * aml_store_class = NULL;
 	int ret = 0;
 	
@@ -496,17 +496,17 @@ static inline struct aml_nand_device   *aml_get_driver_data(
 static int get_nand_platform(struct aml_nand_device *aml_nand_dev,struct platform_device *pdev)
 {
 	int ret;
-	const char *name,*propname;
-	struct property *prop;
-	const __be32 *list;
-	int size,config,index;
-	int selector,match_mode;
-	const char *select;
-	phandle phandle;
-	int val=0,plat_num=0;
-	unsigned char  plat_name[16];
-	struct device_node *np_config;
-	struct device_node *np_part;
+	//const char *name,*propname;
+	//struct property *prop;
+	//const __be32 *list;
+	//int size,config,index;
+	//int selector,match_mode;
+	//const char *select;
+	//phandle phandle;
+	int plat_num=0;
+	//unsigned char  plat_name[16];
+	//struct device_node *np_config;
+	//struct device_node *np_part;
 	struct device_node *np = pdev->dev.of_node;
 	
 	if(pdev->dev.of_node){
@@ -666,10 +666,10 @@ int amlnf_exit(unsigned flag)
 static int amlnf_exit(struct platform_device *pdev)
 #endif
 {
-	int ret = 0;
-#ifndef AML_NAND_UBOOT
-	unsigned flag = 0;
-#endif
+	//int ret = 0;
+//#ifndef AML_NAND_UBOOT
+	//unsigned flag = 0;
+//#endif
 
 	return 0;
 }

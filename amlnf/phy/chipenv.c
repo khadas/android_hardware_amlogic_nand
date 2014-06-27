@@ -140,10 +140,10 @@ int amlnand_free_block_test(struct amlnand_chip *aml_chip, int start_blk)
 	char block_invalid = 0;
 	
 	unsigned char phys_erase_shift, phys_page_shift, nand_boot;  
-	unsigned i, offset, offset_tmp,  pages_per_blk, pages_read, amount_loaded =0;
+	unsigned  offset,  pages_per_blk, pages_read;
 	unsigned char  oob_buf[8];
-	unsigned short total_blk, tmp_blk;
-	int  ret = 0, len,t=0;
+	unsigned short  tmp_blk;
+	int  ret = 0, t=0;
 
 	unsigned char *dat_buf =NULL;
 
@@ -632,7 +632,7 @@ int amlnand_read_info_by_name(struct amlnand_chip *aml_chip,unsigned char * info
 	nand_arg_oobinfo * arg_oob_info; 
 
 	unsigned char phys_erase_shift, phys_page_shift, nand_boot;  
-	unsigned i, offset, offset_tmp,  pages_per_blk, pages_read, amount_loaded =0;
+	unsigned  offset, offset_tmp,  pages_per_blk, pages_read, amount_loaded =0;
 	unsigned char  oob_buf[sizeof(struct _nand_arg_oobinfo)];
 	unsigned short start_blk, total_blk, tmp_blk;
 	int  ret = 0, len;
@@ -1090,10 +1090,10 @@ int amlnand_check_info_by_name(struct amlnand_chip *aml_chip,unsigned char * inf
 	 nand_arg_oobinfo * arg_oob_info;	
 
 	unsigned char phys_erase_shift, phys_page_shift, nand_boot;  
-	unsigned i, offset, offset_tmp,  pages_per_blk, pages_read, amount_loaded =0;
+	unsigned i, offset, pages_per_blk, pages_read;
 	unsigned char  oob_buf[sizeof(struct _nand_arg_oobinfo)];
 	unsigned short start_blk, total_blk, tmp_blk;
-	int  ret = 0,read_failed_page=0,read_middle_page_failed=0, len;
+	int  ret = 0,read_failed_page=0,read_middle_page_failed=0;
 
 	nand_boot = 1;
 	/*if(boot_device_flag == 0){
@@ -1434,14 +1434,14 @@ exit_error0:
 
 int amlnand_info_init(struct amlnand_chip *aml_chip,unsigned char * info,unsigned char * buf,unsigned char *name,unsigned size)
 {
-	struct hw_controller *controller = &aml_chip->controller;
-	struct nand_flash *flash = &aml_chip->flash;
-	struct chip_operation *operation = & aml_chip->operation;
-	struct chip_ops_para  *ops_para = &aml_chip->ops_para; 
+	//struct hw_controller *controller = &aml_chip->controller;
+	//struct nand_flash *flash = &aml_chip->flash;
+	//struct chip_operation *operation = & aml_chip->operation;
+	//struct chip_ops_para  *ops_para = &aml_chip->ops_para; 
 	nand_arg_info * arg_info = (struct _nand_arg_info *)info;
-	 nand_arg_oobinfo * arg_oob_info;	
+	// nand_arg_oobinfo * arg_oob_info;	
 	 
-	int i, ret =0;
+	int ret =0;
 	
 	aml_nand_dbg("NAME :  %s",name);
 	
@@ -1482,14 +1482,14 @@ exit_error:
 *****************************************************************************/
 int amlnand_update_bbt(struct amlnand_chip *aml_chip)
 {
-	struct hw_controller *controller = &aml_chip->controller;
-	struct chip_operation *operation = &aml_chip->operation;
+	//struct hw_controller *controller = &aml_chip->controller;
+	//struct chip_operation *operation = &aml_chip->operation;
 	struct nand_flash *flash = &aml_chip->flash;		
 	
-	unsigned total_blk,pages_per_blk, chipnr ;
+	unsigned total_blk,pages_per_blk;
 	unsigned char phys_erase_shift, phys_page_shift;
-	unsigned short *tmp_status, *tmp_bbt;
-	int ret = 0, i, j;
+	//unsigned short *tmp_status, *tmp_bbt;
+	int ret = 0;
 	uint64_t tmp_size;
 	
 aml_nand_dbg("amlnand_update_bbt  :here!!");
@@ -1535,9 +1535,9 @@ exit_error0:
 int amlnand_init_block_status(struct amlnand_chip *aml_chip)
 {
 	struct hw_controller *controller = &aml_chip->controller;
-	struct chip_operation *operation = &aml_chip->operation;
+	//struct chip_operation *operation = &aml_chip->operation;
 	struct nand_flash *flash = &aml_chip->flash;		
-	struct shipped_bbt * shipped_bbt_ptr = aml_chip->shipped_bbt_ptr;
+	//struct shipped_bbt * shipped_bbt_ptr = aml_chip->shipped_bbt_ptr;
 
 	unsigned start_blk, total_blk, chipnr, pages_per_blk, offset, nand_boot ;
 	unsigned short * tmp_bbt, *tmp_status;
@@ -1824,7 +1824,7 @@ int aml_nand_save_hynix_info(struct amlnand_chip *aml_chip)
 
 	unsigned char phys_erase_shift, phys_page_shift;	
 	unsigned short  blk_addr=0,  tmp_blk,  nand_boot;
-	unsigned i, j, k,offset,  pages_per_blk,pages_read;
+	unsigned i, j, offset,  pages_per_blk,pages_read;
 	unsigned char oob_buf [8] ;
 	int ret = 0;
 	unsigned tmp_addr;
@@ -2352,8 +2352,8 @@ static int amlnand_config_buf_malloc(struct amlnand_chip *aml_chip)
 {
 	struct hw_controller *controller = &aml_chip->controller;
 	struct nand_flash *flash = &aml_chip->flash;
-	struct chip_operation *operation = & aml_chip->operation;
-	struct chip_ops_para  *ops_para = & aml_chip->ops_para; 
+	//struct chip_operation *operation = & aml_chip->operation;
+	//struct chip_ops_para  *ops_para = & aml_chip->ops_para; 
 	unsigned ret =0, buf_size;
 
 	buf_size = flash->oobsize * controller->chip_num;
@@ -2451,19 +2451,19 @@ void amlnand_set_config_attribute(struct amlnand_chip *aml_chip)
 *****************************************************************************/
 int amlnand_get_dev_configs(struct amlnand_chip *aml_chip)
 {
-	struct hw_controller *controller = &aml_chip->controller;
-	struct nand_flash *flash = &aml_chip->flash;
-	struct chip_operation *operation = & aml_chip->operation;
-	struct chip_ops_para  *ops_para = & aml_chip->ops_para; 
-	struct read_retry_info *retry_info = &(controller->retry_info);
-	struct dev_para *dev_para = NULL;
-	 nand_arg_info * nand_key = &aml_chip->nand_key;  
-	nand_arg_info  * nand_secure= &aml_chip->nand_secure;
+	//struct hw_controller *controller = &aml_chip->controller;
+	//struct nand_flash *flash = &aml_chip->flash;
+	//struct chip_operation *operation = & aml_chip->operation;
+	//struct chip_ops_para  *ops_para = & aml_chip->ops_para; 
+	//struct read_retry_info *retry_info = &(controller->retry_info);
+	//struct dev_para *dev_para = NULL;
+	 //nand_arg_info * nand_key = &aml_chip->nand_key;  
+//	nand_arg_info  * nand_secure= &aml_chip->nand_secure;
 #ifdef AML_NAND_UBOOT
 	struct amlnf_partition * configs_init = (struct amlnf_partition *) amlnand_config;
 #endif
 	int  ret = 0, i;
-	unsigned buf_size;
+	//unsigned buf_size;
 	aml_nand_msg("boot_device_flag = %d",boot_device_flag);
 
 #ifdef AML_NAND_UBOOT		

@@ -71,7 +71,7 @@ static int32_t nand_key_read(aml_keybox_provider_t * provider, uint8_t *buf,int 
 {
 	struct amlnand_chip * aml_chip = provider->priv;
 	meson_key *key_ptr = NULL;
-	int error = 0,i=0;
+	int error = 0;
 	if(len > KEYSIZE)
 	{
 		printk("key data len too much,%s\n",__func__);
@@ -103,7 +103,7 @@ static int32_t nand_key_write(aml_keybox_provider_t * provider, uint8_t *buf,int
 {
 	struct amlnand_chip * aml_chip = provider->priv;
 	meson_key *key_ptr = NULL;
-	int error = 0,i=0;
+	int error = 0;
 
 	if(len > KEYSIZE)
 	{

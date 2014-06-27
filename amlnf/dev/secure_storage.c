@@ -47,7 +47,7 @@ exit:
 {
 	//struct amlnand_chip * aml_chip = provider->priv;
 	secure_t *secure_ptr = NULL;
-	int error = 0,i=0;
+	int error = 0;
 	if(len > CONFIG_SECURE_SIZE)
 	{
 		aml_nand_msg("key data len too much,%s\n",__func__);
@@ -77,7 +77,7 @@ exit:
 int32_t nand_secure_write(struct amlnand_chip * aml_chip, char *buf,int len)
 {
 	secure_t *secure_ptr = NULL;
-	int error = 0,i=0;
+	int error = 0;
 
 	if(len > CONFIG_SECURE_SIZE)
 	{

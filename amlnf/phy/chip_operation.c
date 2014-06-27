@@ -106,7 +106,7 @@ static int read_page(struct amlnand_chip *aml_chip)
 	unsigned char i, bch_mode, plane_num, chip_num, chipnr, user_byte_num; 
 	unsigned char with_oob, with_data, plane0_retry_flag = 0, all_ff_flag = 0;
 	unsigned char need_retry, retry_cnt, up_page, slc_mode; 	
-	int ooblen, j, ret = 0;
+	int ooblen, ret = 0;
 	int new_oob = 0;
 	int retry_op_cnt = retry_info->retry_cnt_lp;
 	//aml_nand_dbg("start");
@@ -1281,8 +1281,8 @@ error_exit0:
 
 static int set_blcok_status(struct amlnand_chip *aml_chip, unsigned char chipnr, unsigned addr,int value)
 {
-	struct hw_controller *controller = &aml_chip->controller;
-	struct nand_flash *flash = &aml_chip->flash;
+	//struct hw_controller *controller = &aml_chip->controller;
+	//struct nand_flash *flash = &aml_chip->flash;
 	unsigned blk_addr = addr;
 	unsigned short *tmp_status = &aml_chip->block_status->blk_status[chipnr][0];
 	
@@ -1294,8 +1294,8 @@ static int set_blcok_status(struct amlnand_chip *aml_chip, unsigned char chipnr,
 
 static int get_blcok_status(struct amlnand_chip *aml_chip, unsigned char chipnr, unsigned addr)
 {
-	struct hw_controller *controller = &aml_chip->controller;
-	struct nand_flash *flash = &aml_chip->flash;
+	//struct hw_controller *controller = &aml_chip->controller;
+	//struct nand_flash *flash = &aml_chip->flash;
 	unsigned blk_addr = addr;
 	unsigned short * tmp_status = &aml_chip->block_status->blk_status[chipnr][0];
 #if 0
@@ -1755,17 +1755,17 @@ error_exit0:
  *************************************************************/
 static int test_block_chip_op(struct amlnand_chip *aml_chip)
 {
-	struct hw_controller *controller = &aml_chip->controller;
-	struct chip_operation *operation = & aml_chip->operation;
+	//struct hw_controller *controller = &aml_chip->controller;
+	//struct chip_operation *operation = & aml_chip->operation;
 	struct chip_ops_para  *ops_para = &aml_chip->ops_para; 
 	struct nand_flash *flash = &aml_chip->flash;
-	struct en_slc_info *slc_info = &(controller->slc_info);
+	//struct en_slc_info *slc_info = &(controller->slc_info);
 	
-	unsigned char phys_erase_shift, phys_page_shift, nand_boot;  
-	unsigned i, offset,pages_per_blk, pages_read, amount_loaded =0,blk_addr = 0;
+	unsigned char phys_erase_shift, phys_page_shift;  
+	unsigned pages_per_blk, pages_read,blk_addr = 0;
 	unsigned char  oob_buf[8];
-	unsigned short total_blk;
-	int  ret = 0, len,t=0;
+//	unsigned short total_blk;
+	int  ret = 0, t=0;
 
 	unsigned char *dat_buf =NULL;
     blk_addr = ops_para->page_addr;
@@ -1901,16 +1901,16 @@ exit:
 static int test_block_reserved(struct amlnand_chip *aml_chip, int tst_blk)
 {
 	struct hw_controller *controller = &aml_chip->controller;
-	struct chip_operation *operation = & aml_chip->operation;
+	//struct chip_operation *operation = & aml_chip->operation;
 	struct chip_ops_para  *ops_para = &aml_chip->ops_para; 
 	struct nand_flash *flash = &aml_chip->flash;
 	struct en_slc_info *slc_info = &(controller->slc_info);
 	
 	unsigned char phys_erase_shift, phys_page_shift, nand_boot;  
-	unsigned i, offset,pages_per_blk, pages_read, amount_loaded =0;
+	unsigned  offset,pages_per_blk, pages_read;
 	unsigned char  oob_buf[8];
-	unsigned short total_blk, tmp_blk;
-	int  ret = 0, len,t=0;
+	unsigned short  tmp_blk;
+	int  ret = 0, t=0;
 
 	unsigned char *dat_buf =NULL;
 
@@ -2066,11 +2066,11 @@ static int blk_modify_bbt_chip_op(struct amlnand_chip *aml_chip,int value)
 	struct hw_controller *controller = &aml_chip->controller;
 	struct nand_flash *flash = &aml_chip->flash;
 	struct chip_ops_para *ops_para = &aml_chip->ops_para;	
-	struct chip_operation *operation = & aml_chip->operation;
+	//struct chip_operation *operation = & aml_chip->operation;
 
 	unsigned blk_addr, page_per_blk_shift;
 	unsigned char chip_num = 1, chipnr;
-	unsigned char  oob_buf[8];
+	//unsigned char  oob_buf[8];
 	int ret = 0;
 
 	if(ops_para->option & DEV_MULTI_CHIP_MODE){
@@ -2158,11 +2158,11 @@ static int update_bbt_chip_op(struct amlnand_chip *aml_chip)
 	struct hw_controller *controller = &aml_chip->controller;
 	struct nand_flash *flash = &aml_chip->flash;
 	struct chip_ops_para *ops_para = &aml_chip->ops_para;	
-	struct chip_operation *operation = & aml_chip->operation;
+	//struct chip_operation *operation = & aml_chip->operation;
 
 	unsigned blk_addr, pages_per_blk_shift;
 	unsigned char chip_num = 1, chipnr;
-	unsigned short * tmp_status;
+	//unsigned short * tmp_status;
 	int ret;
 
 	if(ops_para->option & DEV_MULTI_CHIP_MODE){

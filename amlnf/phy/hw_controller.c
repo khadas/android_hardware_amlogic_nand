@@ -14,7 +14,7 @@
 
 static int controller_select_chip(struct hw_controller *controller, unsigned char chipnr)
 {
-	int i, ret = 0;
+	int  ret = 0;
 	
 	switch (chipnr) {
 		case 0:
@@ -102,7 +102,7 @@ void controller_close_interrupt()
 
 static irqreturn_t controller_interrupt_monitor(int irq, void *dev_id, struct pt_regs *regs) 
 {
-    struct hw_controller *controller = (struct aml_nand_chip *)dev_id;
+    //struct hw_controller *controller = (struct aml_nand_chip *)dev_id;
 
     //printk("***nand irq here\n");
 
@@ -256,8 +256,8 @@ static int controller_dma_read(struct hw_controller *controller, unsigned len, u
 {
 	int count, dma_unit_size, info_times_int_len, time_out_cnt,dma_cnt;
 	volatile unsigned int * info_buf = 0;
-	volatile int cmp=0;
-	int ret = 0;
+	//volatile int cmp=0;
+	//int ret = 0;
 
 	dma_unit_size = 0;
 	info_times_int_len = PER_INFO_BYTE/sizeof(unsigned int);
@@ -467,7 +467,7 @@ static int controller_dma_write(struct hw_controller *controller, unsigned char 
   */
 static int controller_hw_init(struct hw_controller *controller)
 {
-	int sys_clk_rate, sys_time, start_cycle, end_cycle, bus_cycle, bus_timing, Tcycle, T_REA = DEFAULT_T_REA, T_RHOH = DEFAULT_T_RHOH;
+	int sys_clk_rate, sys_time, bus_cycle, bus_timing;
 	int ret = 0;
 
 	sys_clk_rate = 212;
@@ -511,7 +511,7 @@ static int controller_adjust_timing(struct hw_controller *controller)
 {
 	struct amlnand_chip *aml_chip = controller->aml_chip;
 	struct nand_flash *flash = &(aml_chip->flash);
-	int sys_clk_rate, sys_time, start_cycle, end_cycle, bus_cycle, bus_timing, Tcycle;
+	int sys_clk_rate, sys_time, bus_cycle, bus_timing;
 
 	if (!flash->T_REA ||(flash->T_REA < 16))
 		flash->T_REA = 16;

@@ -395,7 +395,7 @@ void pinmux_select_chip(unsigned ce_enable, unsigned rb_enable, unsigned flag)
 void get_sys_clk_rate(int * rate)
 {
 #ifndef AML_NAND_UBOOT
-	struct clk *sys_clk;
+//	struct clk *sys_clk;
 #endif	
 
 #ifdef CONFIG_NAND_AML_M8
@@ -418,6 +418,7 @@ void get_sys_clk_rate(int * rate)
 	//*rate = 200*1000000;
 #endif
 #else
+	struct clk *sys_clk;
 	#ifndef AML_NAND_UBOOT
 		sys_clk = clk_get_sys(NAND_SYS_CLK_NAME, NULL);
 		*rate = clk_get_rate(sys_clk);
@@ -432,7 +433,7 @@ void get_sys_clk_rate(int * rate)
 {
 	struct amlnand_chip *aml_chip = (struct amlnand_chip *)phydev->priv;	
 	struct nand_flash *flash = &(aml_chip->flash);
-	struct phydev_ops *devops = &(phydev->ops);
+//	struct phydev_ops *devops = &(phydev->ops);
 	struct hw_controller *controller = &(aml_chip->controller); 
 	struct en_slc_info *slc_info = &(controller->slc_info);
 	
@@ -520,7 +521,9 @@ void uboot_set_ran_mode(struct amlnand_phydev *phydev)
 int aml_sys_info_init(struct amlnand_chip *aml_chip)
 {
 	nand_arg_info * nand_key = &aml_chip->nand_key;  
+#ifdef CONFIG_SECURE_NAND
 	nand_arg_info  * nand_secure= &aml_chip->nand_secure;
+#endif
 	nand_arg_info *  uboot_env =  &aml_chip->uboot_env;
 	unsigned char *buf = NULL;
 	unsigned int buf_size = 0;

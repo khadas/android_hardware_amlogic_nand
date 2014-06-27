@@ -50,7 +50,7 @@ static DEFINE_MUTEX(ntd_partitions_mutex);
 static int read_page_with_oob(struct ntd_info *ntd, uint32_t page, u_char *oob_buf, u_char *buf)
 {
     int ret;
-    unsigned int temp;
+    //unsigned int temp;
     uint64_t byte_addr;
     struct amlnand_phydev* nand_dev = (struct amlnand_phydev*)ntd->priv;
 		//printk("1111read_page_with_oob : %x %d\n", page, p);
@@ -90,7 +90,7 @@ static int read_page_with_oob(struct ntd_info *ntd, uint32_t page, u_char *oob_b
 static int read_only_oob(struct ntd_info *ntd, u_int32_t page, u_char *oob_buf)
 {
     int ret;
-    unsigned int temp;
+    //unsigned int temp;
     uint64_t byte_addr;
     struct amlnand_phydev* nand_dev = (struct amlnand_phydev*)ntd->priv;
 
@@ -120,7 +120,7 @@ static int read_only_oob(struct ntd_info *ntd, u_int32_t page, u_char *oob_buf)
 static int write_page_with_oob(struct ntd_info *ntd, uint32_t page, u_char *oob_buf, u_char *buf)
 {
     int ret;
-    unsigned int temp;
+    //unsigned int temp;
     uint64_t byte_addr;
     struct amlnand_phydev* nand_dev = (struct amlnand_phydev*)ntd->priv;
 
@@ -268,7 +268,7 @@ static int part_suspend(struct ntd_info *ntd)
 static void part_resume(struct ntd_info *ntd)
 {
 	struct amlnand_phydev* phy;
-	int ret = 0;
+	//int ret = 0;
 	phy = ntd->priv;
 	if(phy == NULL){
 		printk("%s : get phy dev failed\n",__func__);
@@ -459,8 +459,8 @@ out_register:
 int add_ntd_partitions(struct amlnand_phydev* master)
 {
 	struct ntd_info *slave;
-	uint64_t cur_offset = 0;
-	int i;
+	//uint64_t cur_offset = 0;
+	//int i;
 
 	printk(KERN_NOTICE "Creating %d ntd partitions\n", master->nr_partitions);
 

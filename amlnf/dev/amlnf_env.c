@@ -218,7 +218,7 @@ static CLASS_ATTR(env, S_IWUSR | S_IRUGO, env_show, env_store);
 int amlnf_env_save(unsigned char *buf,int len)
 {
 	unsigned char *env_buf = NULL;
-	int ret=0, i=0;
+	int ret=0;
 	aml_nand_msg("uboot env amlnf_env_save : ####");
 
 	if(len > CONFIG_ENV_SIZE)
@@ -254,7 +254,7 @@ exit_err:
 int amlnf_env_read(unsigned char *buf,int len)
 {
 	unsigned char*env_buf = NULL;
-	int ret=0, i=0;
+	int ret=0;
 	
 	aml_nand_msg("uboot env amlnf_env_read : ####");
 

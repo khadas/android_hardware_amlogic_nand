@@ -184,8 +184,8 @@ int roomboot_nand_read(struct amlnand_phydev *phydev)
 	struct amlnand_chip *aml_chip = (struct amlnand_chip *)phydev->priv;	
 	struct phydev_ops *devops = &(phydev->ops);
 	struct hw_controller *controller = &(aml_chip->controller); 
-	struct chip_operation *operation = &(aml_chip->operation);	
-	struct chip_ops_para *ops_para = &(aml_chip->ops_para);
+	//struct chip_operation *operation = &(aml_chip->operation);	
+	//struct chip_ops_para *ops_para = &(aml_chip->ops_para);
 
 	uint64_t offset , write_len;
 	unsigned char * buffer;
@@ -235,8 +235,8 @@ static int write_uboot(struct amlnand_phydev *phydev)
 	unsigned configure_data, pages_per_blk, oobsize, page_size, tmp_size,priv_lsb,ops_tem; 
 	unsigned short tmp_ecc_unit, tmp_ecc_bytes, tmp_ecc_steps;
 	uint64_t addr, writelen = 0, len = 0;
-	int chip_num=1, nand_read_info, new_nand_type, i, ret = 0;
-	unsigned char  *tmp_buf;
+	int  i, ret = 0;
+	//unsigned char  *tmp_buf;
 	
 	if((devops->addr + devops->len) >  phydev->size){
 		aml_nand_msg("writeboot:out of space and addr:%llx len:%llx phydev->offset:%llx phydev->size:%llx",\
@@ -560,11 +560,11 @@ static ssize_t uboot_write(struct file *file, const char __user *buf,
 {
 	struct amlnand_phydev * phydev = uboot_phydev;
 	struct amlnand_chip *aml_chip = phydev->priv;	
-	struct nand_flash *flash = &(aml_chip->flash);
+	//struct nand_flash *flash = &(aml_chip->flash);
 	struct phydev_ops *devops = &(phydev->ops);
-	struct hw_controller *controller = &(aml_chip->controller); 
-	struct chip_operation *operation = &(aml_chip->operation);	
-	struct chip_ops_para *ops_para = &(aml_chip->ops_para);
+	//struct hw_controller *controller = &(aml_chip->controller); 
+	//struct chip_operation *operation = &(aml_chip->operation);	
+	//struct chip_ops_para *ops_para = &(aml_chip->ops_para);
 
 	unsigned char *data_buf;
 	int  ret;
@@ -633,12 +633,12 @@ static struct file_operations uboot_fops = {
 
 int boot_device_register(struct amlnand_phydev *phydev)
 {
-	struct amlnand_chip *aml_chip = phydev->priv;	
-	struct nand_flash *flash = &(aml_chip->flash);
-	struct phydev_ops *devops = &(phydev->ops);
-	struct hw_controller *controller = &(aml_chip->controller); 
-	struct chip_operation *operation = &(aml_chip->operation);	
-	struct chip_ops_para *ops_para = &(aml_chip->ops_para);
+	//struct amlnand_chip *aml_chip = phydev->priv;	
+	//struct nand_flash *flash = &(aml_chip->flash);
+	//struct phydev_ops *devops = &(phydev->ops);
+	//struct hw_controller *controller = &(aml_chip->controller); 
+	//struct chip_operation *operation = &(aml_chip->operation);	
+	//struct chip_ops_para *ops_para = &(aml_chip->ops_para);
 
 	int ret = 0;
 	

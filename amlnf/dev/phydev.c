@@ -43,11 +43,11 @@ static unsigned amlnand_slc_addr_trs(struct amlnand_phydev *phydev)
 	struct nand_flash *flash = &(aml_chip->flash);
 	struct phydev_ops *devops = &(phydev->ops);
 	struct hw_controller *controller = &(aml_chip->controller);	
-	struct chip_operation *operation = &(aml_chip->operation);	
-	struct chip_ops_para *ops_para = &(aml_chip->ops_para);
+	//struct chip_operation *operation = &(aml_chip->operation);	
+	//struct chip_ops_para *ops_para = &(aml_chip->ops_para);
 	struct en_slc_info *slc_info = &(controller->slc_info);
-	int real_page_per_blk, page_per_blk, blk_num, blk_num_in_dev, page_num, ret = 0;
-	uint64_t addr, readlen = 0, len = 0;
+	int real_page_per_blk, page_per_blk, blk_num, blk_num_in_dev, page_num;
+	//uint64_t addr, readlen = 0;
 	unsigned real_erase_size, real_erase_shift, page_addr = 0;
 
 	real_erase_size = (phydev->erasesize << 1);
@@ -89,7 +89,7 @@ static void nand_write_verify(struct amlnand_phydev *phydev)
 {
 	struct amlnand_chip *aml_chip = (struct amlnand_chip *)phydev->priv;	
 	struct phydev_ops *devops = &(phydev->ops);
-	struct hw_controller *controller = &(aml_chip->controller);	
+	//struct hw_controller *controller = &(aml_chip->controller);	
 	struct chip_operation *operation = &(aml_chip->operation);	
 	struct chip_ops_para *ops_para = &(aml_chip->ops_para);
 
@@ -374,7 +374,7 @@ int nand_erase(struct amlnand_phydev *phydev)
 static int nand_block_isbad(struct amlnand_phydev *phydev)
 {
 	struct amlnand_chip *aml_chip = (struct amlnand_chip *)phydev->priv;	
-	struct nand_flash *flash = &(aml_chip->flash);
+	//struct nand_flash *flash = &(aml_chip->flash);
 	struct phydev_ops *devops = &(phydev->ops);
 	struct hw_controller *controller = &(aml_chip->controller);	
 	struct chip_operation *operation = &(aml_chip->operation);	
@@ -651,7 +651,7 @@ static int aml_repair_bbt(struct amlnand_phydev *phydev,uint64_t *bad_blk_addr,i
 {
 	int i;
 	int error = 0;
-	int flag = 0;
+	//int flag = 0;
 	struct phydev_ops *devops = &(phydev->ops);
 	unsigned char * buffer = NULL;
 	buffer = aml_nand_malloc(2 * phydev->writesize);
@@ -696,16 +696,16 @@ void amldev_dumpinfo(struct amlnand_phydev *phydev)
 ssize_t nand_page_read(struct class *class, struct class_attribute *attr, const char *buf, size_t count)
 {
 	struct amlnand_phydev *phydev = container_of(class, struct amlnand_phydev, cls);
-	struct amlnand_chip *aml_chip = (struct amlnand_chip *)phydev->priv;	
-	struct hw_controller *controller = &(aml_chip->controller);	
-	struct chip_operation *operation = &(aml_chip->operation);	
-	struct chip_ops_para *ops_para = &(aml_chip->ops_para);
-	struct nand_flash *flash = &(aml_chip->flash);	
+	//struct amlnand_chip *aml_chip = (struct amlnand_chip *)phydev->priv;	
+	//struct hw_controller *controller = &(aml_chip->controller);	
+	//struct chip_operation *operation = &(aml_chip->operation);	
+	//struct chip_ops_para *ops_para = &(aml_chip->ops_para);
+	//struct nand_flash *flash = &(aml_chip->flash);	
 	struct phydev_ops  *devops = &(phydev->ops);
 	
-	unsigned char *datbuf, *oobbuf, *p;
+	unsigned char *datbuf, *p;
 	uint64_t offset , write_len;
-	loff_t off, addr;
+	loff_t off;
 	size_t ret;
 	int i;
 	
@@ -813,20 +813,20 @@ void amlchip_resume(struct amlnand_phydev *phydev)
 ssize_t nand_page_write(struct class *class, struct class_attribute *attr, const char *buf, size_t count)
 {
 	struct amlnand_phydev *phydev = container_of(class, struct amlnand_phydev, cls);
-	struct amlnand_chip *aml_chip = (struct amlnand_chip *)phydev->priv;	
-	struct hw_controller *controller = &(aml_chip->controller);	
-	struct chip_operation *operation = &(aml_chip->operation);	
-	struct chip_ops_para *ops_para = &(aml_chip->ops_para);
-	struct nand_flash *flash = &(aml_chip->flash);	
+	//struct amlnand_chip *aml_chip = (struct amlnand_chip *)phydev->priv;	
+	//struct hw_controller *controller = &(aml_chip->controller);	
+	//struct chip_operation *operation = &(aml_chip->operation);	
+	//struct chip_ops_para *ops_para = &(aml_chip->ops_para);
+	//struct nand_flash *flash = &(aml_chip->flash);	
 	struct phydev_ops  *devops = &(phydev->ops);
 	aml_nand_dbg("phydev->name =%s",phydev->name);
 	aml_nand_dbg("write page");
 
-    	u_char *datbuf, *oobbuf, *p;
+    	u_char *datbuf;
 	uint64_t offset , write_len;
-	loff_t off, addr;
+	loff_t off;
 	size_t ret;
-	int i;
+	//int i;
 	
    	ret = sscanf(buf, "%llx", &off);
 	datbuf = kmalloc(2*phydev->writesize, GFP_KERNEL);
@@ -900,16 +900,16 @@ ssize_t verify_nand_page(struct class *class, struct class_attribute *attr, cons
 ssize_t dump_nand_page(struct class *class, struct class_attribute *attr, const char *buf, size_t count)
 {
 	struct amlnand_phydev *phydev = container_of(class, struct amlnand_phydev, cls);
-	struct amlnand_chip *aml_chip = (struct amlnand_chip *)phydev->priv;	
-	struct hw_controller *controller = &(aml_chip->controller);	
-	struct chip_operation *operation = &(aml_chip->operation);	
-	struct chip_ops_para *ops_para = &(aml_chip->ops_para);
-	struct nand_flash *flash = &(aml_chip->flash);	
+	//struct amlnand_chip *aml_chip = (struct amlnand_chip *)phydev->priv;	
+	//struct hw_controller *controller = &(aml_chip->controller);	
+	//struct chip_operation *operation = &(aml_chip->operation);	
+	//struct chip_ops_para *ops_para = &(aml_chip->ops_para);
+	//struct nand_flash *flash = &(aml_chip->flash);	
 	struct phydev_ops  *devops = &(phydev->ops);
 
-	unsigned char *datbuf, *oobbuf, *p;
+	unsigned char *datbuf, *p;
 	uint64_t offset , write_len;
-	uint64_t off, addr;
+	uint64_t off;
 	size_t ret;
 	int i;
 	

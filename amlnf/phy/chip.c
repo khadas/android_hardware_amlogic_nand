@@ -130,7 +130,7 @@ static int amlnand_chip_scan(struct amlnand_chip *aml_chip)
 	struct chip_operation *operation = &(aml_chip->operation);
 	unsigned char dev_id[MAX_ID_LEN] = {0};
 	unsigned char onfi_features[4] = {0};
- 	int i, t, chip_num, ret = 0;
+ 	int i, chip_num, ret = 0;
 
 	//should setting nand pinmux first
 #ifdef AML_NAND_UBOOT
