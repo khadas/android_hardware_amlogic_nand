@@ -201,7 +201,7 @@ uint32 write_sync_flag(struct aml_nftl_blk *aml_nftl_blk)
 	struct aml_nftl_dev *nftl_dev = aml_nftl_blk->nftl_dev;
 	struct ntd_info *ntd = aml_nftl_blk->nbd.ntd;
     	nftl_dev->sync_flag = 0;
-	if(memcmp(ntd->name, "data", 4)==0)
+	if(memcmp(aml_nftl_blk->name, "media", 5)==0)
 		return 0;
 	else {
 			if(aml_nftl_blk->req->cmd_flags & REQ_SYNC)
