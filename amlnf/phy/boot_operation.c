@@ -516,7 +516,7 @@ int roomboot_nand_write(struct amlnand_phydev *phydev)
 	
 			ret = operation->erase_block(aml_chip);
 			if(ret<0){
-				aml_nand_msg("nand erase fail at addr :%lx ", ops_para->page_addr);
+			    aml_nand_msg("nand erase fail at addr page %d", ops_para->page_addr);			
 				//break;
 			}
 			
