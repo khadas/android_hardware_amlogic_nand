@@ -59,7 +59,7 @@ static void blktrans_dev_release(struct kref *kref)
     list_del(&dev->list);
     kfree(dev);
 }
-int amlnf_class_register(class)
+int amlnf_class_register(struct class *class)
 {
     return class_register(class);
 }
@@ -242,9 +242,9 @@ unlock:
     blktrans_dev_put(dev);
     return ret;
 
-error_release:
-    if (dev->tr->release)
-        dev->tr->release(dev);
+//error_release:
+//    if (dev->tr->release)
+//        dev->tr->release(dev);
 error_put:
     module_put(dev->tr->owner);
     kref_put(&dev->ref, blktrans_dev_release);
@@ -260,13 +260,13 @@ error_put:
 *Return       :
 *Note         :
 *****************************************************************************/
-int blktrans_release(struct gendisk *disk, fmode_t mode)
+void blktrans_release(struct gendisk *disk, fmode_t mode)
 {
     struct ntd_blktrans_dev *dev = blktrans_dev_get(disk);
-    int ret = 0;
+    //int ret = 0;
 
     if (!dev)
-        return ret;
+        return;
 
     mutex_lock(&dev->lock);
 
@@ -284,7 +284,7 @@ int blktrans_release(struct gendisk *disk, fmode_t mode)
 unlock:
     mutex_unlock(&dev->lock);
     blktrans_dev_put(dev);
-    return ret;
+    return;
 }
 
 /*****************************************************************************
@@ -308,7 +308,7 @@ int blktrans_getgeo(struct block_device *bdev, struct hd_geometry *geo)
 //        goto unlock;
 
     ret = dev->tr->getgeo ? dev->tr->getgeo(dev, geo) : 0;
-unlock:
+//unlock:
     mutex_unlock(&dev->lock);
     blktrans_dev_put(dev);
     return ret;
@@ -358,7 +358,7 @@ int blktrans_ioctl(struct block_device *bdev, fmode_t mode,unsigned int cmd, uns
             ret = -ENOTTY;
         break;
     }
-unlock:
+//unlock:
     mutex_unlock(&dev->lock);
     blktrans_dev_put(dev);
     return ret;
@@ -495,7 +495,7 @@ error3:
     put_disk(new->disk);
 error2:
     list_del(&new->list);
-error1:
+//error1:
     return ret;
 }
 

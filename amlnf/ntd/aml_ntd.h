@@ -121,7 +121,8 @@ struct ntd_partition {
 	void*    priv;
 };
 
-
+struct request;
+struct hd_geometry;
 struct ntd_blktrans_ops {
 	char *name;
 	int major;
@@ -220,7 +221,7 @@ extern int del_ntd_device (struct ntd_info *ntd);
 
 
 struct ntd_partition;
-
+struct amlnand_phydev;
 extern int ntd_device_register(struct ntd_info *master,
 			       const struct ntd_partition *parts,
 			       int nr_parts);

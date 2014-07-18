@@ -28,7 +28,7 @@
 static int ntd_cls_suspend(struct device *dev, pm_message_t state);
 static int ntd_cls_resume(struct device *dev);
 static int init_ntd(void);
-
+static DEFINE_SPINLOCK(ntd_idr_lock);
 static atomic_t ntd_init_available = ATOMIC_INIT(1);
 
 static struct class ntd_class = {
@@ -225,14 +225,19 @@ int add_ntd_device(struct ntd_info *ntd)
 	BUG_ON(ntd->pagesize == 0);
 
 	mutex_lock(&ntd_table_mutex);
-
+/*
 	do {
 		if (!idr_pre_get(&ntd_idr, GFP_KERNEL))
 			goto fail_locked;
 		error = idr_get_new(&ntd_idr, ntd, &i);
 	} while (error == -EAGAIN);
-
-	if (error){
+*/
+	idr_preload(GFP_KERNEL);
+	spin_lock_irq(&ntd_idr_lock);
+	i = idr_alloc(&ntd_idr, ntd, 0, 0, GFP_NOWAIT);
+	spin_unlock_irq(&ntd_idr_lock);
+	idr_preload_end();
+	if (i < 0){
 		goto fail_locked;
 	}
 
@@ -310,7 +315,7 @@ int del_ntd_device(struct ntd_info *ntd)
 	}
 
 	if (ntd->usecount) {
-		printk(KERN_NOTICE "Removing NTD device #%d (%s) with use count %d\n",ntd->index, ntd->name, ntd->usecount);
+		printk(KERN_NOTICE "Removing NTD device #%ld (%s) with use count %d\n",ntd->index, ntd->name, ntd->usecount);
 		ret = -EBUSY;
 	} else {
 		device_unregister(&ntd->dev);
@@ -388,7 +393,7 @@ out_error:
 *****************************************************************************/
 struct ntd_info *get_ntd_device(struct ntd_info *ntd, int num)
 {
-	struct ntd_info *ret = NULL, *other;
+	struct ntd_info *ret = NULL, *other=NULL;
 	int err = -ENODEV;
 
 	mutex_lock(&ntd_table_mutex);
@@ -460,7 +465,7 @@ int __get_ntd_device(struct ntd_info *ntd)
 struct ntd_info *get_ntd_device_nm(const char *name)
 {
 	int err = -ENODEV;
-	struct ntd_info *ntd = NULL, *other;
+	struct ntd_info *ntd = NULL, *other=NULL;
 
 	mutex_lock(&ntd_table_mutex);
 
@@ -597,7 +602,7 @@ static int ntd_proc_show(struct seq_file *m, void *v)
 	seq_puts(m, "dev:    block_num   blocksize  name\n");
 	mutex_lock(&ntd_table_mutex);
 	ntd_for_each_device(ntd) {
-		seq_printf(m, "ntd%d: %8.8llx %8.8x \"%s\"\n",ntd->index, (unsigned long long)ntd->size,ntd->blocksize, ntd->name);
+		seq_printf(m, "ntd%ld: %8.8llx %8.8lx \"%s\"\n",ntd->index, (unsigned long long)ntd->size,ntd->blocksize, ntd->name);
 	}
 	mutex_unlock(&ntd_table_mutex);
 	return 0;
@@ -667,8 +672,8 @@ static int init_ntd(void)
 #endif /* CONFIG_PROC_FS */
 	return 0;
 
-err_bdi1:
-	class_unregister(&ntd_class);
+//err_bdi1:
+//	class_unregister(&ntd_class);
 err_reg:
 	pr_err("Error registering ntd class or bdi: %d\n", ret);
 	return ret;
@@ -682,16 +687,17 @@ err_reg:
 *Note         :
 *****************************************************************************/
 //static void __exit cleanup_ntd(void)
+/*
 static void cleanup_ntd(void)
 {
 #ifdef CONFIG_PROC_FS
 	if (proc_ntd)
 		remove_proc_entry( "ntd", NULL);
-#endif /* CONFIG_PROC_FS */
+#endif 
 	class_unregister(&ntd_class);
 //	bdi_destroy(&ntd_bdi_unmappable);
 }
-
+*/
 //module_init(init_ntd);
 //module_exit(cleanup_ntd);
 

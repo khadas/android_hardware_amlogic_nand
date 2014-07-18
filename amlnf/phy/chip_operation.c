@@ -13,7 +13,7 @@
 *****************************************************************/
 #include "../include/phynand.h"
 
-static int check_cmdfifo_size()
+static int check_cmdfifo_size(void)
 {
 	int time_out_cnt = 0, retry_cnt = 0;
 
@@ -105,7 +105,7 @@ static int read_page(struct amlnand_chip *aml_chip)
 	unsigned plane0_page_addr, plane1_page_addr, column, page_addr;	
 	unsigned char i, bch_mode, plane_num, chip_num, chipnr, user_byte_num; 
 	unsigned char with_oob, with_data, plane0_retry_flag = 0, all_ff_flag = 0;
-	unsigned char need_retry, retry_cnt, up_page, slc_mode; 	
+	unsigned char need_retry, retry_cnt, up_page=0, slc_mode; 	
 	int ooblen, ret = 0;
 	int new_oob = 0;
 	int retry_op_cnt = retry_info->retry_cnt_lp;
@@ -1790,7 +1790,7 @@ static int test_block_chip_op(struct amlnand_chip *aml_chip)
 //	nand_get_chip(aml_chip);
 //#endif	
     //erase
-    aml_nand_msg("erase addr = %ld",ops_para->page_addr);
+    aml_nand_msg("erase addr = %d",ops_para->page_addr);
 
 	ret = erase_block(aml_chip); 	
 	if(ret < 0){
@@ -1798,7 +1798,7 @@ static int test_block_chip_op(struct amlnand_chip *aml_chip)
 		ret =  -1;
 		goto exit;
 	}
-    aml_nand_msg("nand blk %ld erase OK",blk_addr);
+    aml_nand_msg("nand blk %d erase OK",blk_addr);
     #if 1
     //read
     memset((unsigned char *)ops_para, 0x0, sizeof(struct chip_ops_para));
@@ -1812,7 +1812,7 @@ static int test_block_chip_op(struct amlnand_chip *aml_chip)
 
 		ret = read_page(aml_chip);
 		if(ret < 0){
-			aml_nand_msg("nand read %ld failed",blk_addr);
+			aml_nand_msg("nand read %d failed",blk_addr);
 			ret =  -1;
 			goto exit;
 		}
@@ -2141,9 +2141,9 @@ static int blk_modify_bbt_chip_op(struct amlnand_chip *aml_chip,int value)
 
 	return ret;
 	
-exit_error0:
+//exit_error0:
 
-	return ret;
+//	return ret;
 }
 
 

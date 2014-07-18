@@ -87,14 +87,14 @@ static int controller_dma_timer_handle(struct hw_controller *controller)
 
 static struct completion controller_rb_completion;
 
-void controller_open_interrupt()
+void controller_open_interrupt(void)
 {
 	//NFC_ENABLE_STS_IRQ();
 	NFC_ENABLE_IO_IRQ();
 	
 }
 
-void controller_close_interrupt()
+void controller_close_interrupt(void)
 {
 	//NFC_DISABLE_STS_IRQ();
 	NFC_DISABLE_IO_IRQ();
@@ -367,7 +367,7 @@ static int controller_dma_read(struct hw_controller *controller, unsigned len, u
 	return NAND_SUCCESS;
 }
 
-static int controller_dma_write(struct hw_controller *controller, unsigned char *buf, int len, unsigned char bch_mode)
+static int controller_dma_write(struct hw_controller *controller, unsigned char *buf, unsigned int len, unsigned char bch_mode)
 {
 	int ret = 0, time_out_cnt = 0, oob_fill_cnt = 0;
 	unsigned dma_unit_size = 0, count = 0;

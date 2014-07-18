@@ -6,7 +6,7 @@
 
 #include "../include/phynand.h"
 
-#define CONFIG_OF
+//#define CONFIG_OF
 #if 0
 int is_phydev_off_adjust(void)
 {
@@ -45,6 +45,7 @@ int boot_device_flag = -1;
 *Return       :
 *Note         :
 *****************************************************************************/
+/*
 static ssize_t nfdev_debug(struct class *class,struct class_attribute *attr,char *buf)
 {
     //struct amlnf_dev* nf_dev = container_of(class, struct amlnf_dev, debug);
@@ -53,7 +54,7 @@ static ssize_t nfdev_debug(struct class *class,struct class_attribute *attr,char
 
     return 0;
 }
-
+*/
 static struct class_attribute phydev_class_attrs[] = {
     __ATTR(info,       S_IRUGO | S_IWUSR, show_nand_info,    NULL),	
     __ATTR(verify,       S_IRUGO | S_IWUSR, NULL,    verify_nand_page),
@@ -86,12 +87,14 @@ static struct class_attribute nfdev_class_attrs[] = {
 *Return       :
 *Note         :
 *****************************************************************************/
+/*
 static int phydev_cls_suspend(struct device *dev, pm_message_t state)
 {
 	
 	return 0;
 	
 }
+*/
 
 /*****************************************************************************
 *Name         :
@@ -100,11 +103,12 @@ static int phydev_cls_suspend(struct device *dev, pm_message_t state)
 *Return       :
 *Note         :
 *****************************************************************************/
+/*
 static int phydev_cls_resume(struct device *dev, pm_message_t state)
 {
 		return 0;
 }
-
+*/
 #if 0
 static struct class phydev_class = {
 	.name = "amlphydev",
@@ -128,7 +132,7 @@ int amlnf_pdev_register(struct amlnand_phydev *phydev)
 	}
 
 	phydev->cls.name = aml_nand_malloc(strlen((const char*)phydev->name)+8);
-	snprintf(phydev->cls.name, (MAX_DEVICE_NAME_LEN+8),
+	snprintf((char *)phydev->cls.name, (MAX_DEVICE_NAME_LEN+8),
 	  	 "%s%s", "phy_", (char *)(phydev->name));
 	phydev->cls.class_attrs = phydev_class_attrs;
 	ret = class_register(&phydev->cls);
@@ -151,9 +155,9 @@ static int amlnf_blk_open(struct block_device *bdev, fmode_t mode)
 	return 0;
 }
 
-static int amlnf_blk_release(struct gendisk *disk, fmode_t mode)
+static void amlnf_blk_release(struct gendisk *disk, fmode_t mode)
 {
-	return 0;
+	return;
 }
 
 
@@ -281,8 +285,8 @@ static ssize_t nand_part_table_get(struct class *class, struct class_attribute *
 				part_table[j].size = dev_paramt->partitions[j].size;
 				part_table[j].offset = dev_paramt->partitions[j].offset;
 				part_table[j].mask_flags = dev_paramt->partitions[j].mask_flags;	
-			//	aml_nand_msg("CODE : partiton name %s, size %llx, offset %llx maskflag %d",\
-			//	part_table[j].name,part_table[j].size,part_table[j].offset,part_table[j].mask_flags);
+			/*	aml_nand_msg("CODE : partiton name %s, size %llx, offset %llx maskflag %d",
+				part_table[j].name,part_table[j].size,part_table[j].offset,part_table[j].mask_flags);*/
 			}
 			break;
 		}
@@ -298,8 +302,8 @@ static ssize_t nand_part_table_get(struct class *class, struct class_attribute *
 				part_table[k].size = dev_paramt->partitions[j].size;
 				part_table[k].offset = dev_paramt->partitions[j].offset;
 				part_table[k].mask_flags = dev_paramt->partitions[j].mask_flags;	
-			//	aml_nand_msg("CODE : partiton name %s, size %llx, offset %llx maskflag %d",\
-				//part_table[k].name,part_table[k].size,part_table[k].offset,part_table[k].mask_flags);
+			/*	aml_nand_msg("CODE : partiton name %s, size %llx, offset %llx maskflag %d",
+				part_table[k].name,part_table[k].size,part_table[k].offset,part_table[k].mask_flags);*/
 			}
 			break;
 		}
@@ -316,8 +320,8 @@ static ssize_t nand_part_table_get(struct class *class, struct class_attribute *
 				part_table[m].size = dev_paramt->partitions[j].size;
 				part_table[m].offset = dev_paramt->partitions[j].offset;
 				part_table[m].mask_flags = dev_paramt->partitions[j].mask_flags;	
-				//aml_nand_msg("CODE : partiton name %s, size %llx, offset %llx maskflag %d",\
-				//part_table[m].name,part_table[m].size,part_table[m].offset,part_table[m].mask_flags);
+				/*aml_nand_msg("CODE : partiton name %s, size %llx, offset %llx maskflag %d",
+				part_table[m].name,part_table[m].size,part_table[m].offset,part_table[m].mask_flags);*/
 			}
 			break;
 		}
@@ -491,6 +495,7 @@ static inline struct aml_nand_device   *aml_get_driver_data(
 		match = of_match_node(amlogic_nand_dt_match, pdev->dev.of_node);
 		return (struct aml_nand_device *)match->data;
 	}
+	return NULL;
 }
 
 static int get_nand_platform(struct aml_nand_device *aml_nand_dev,struct platform_device *pdev)
@@ -520,8 +525,8 @@ static int get_nand_platform(struct aml_nand_device *aml_nand_dev,struct platfor
 	aml_nand_dbg("plat_num %d ",plat_num);
 	
 	return 0;
-err:
-	return -1;
+//err:
+//	return -1;
 }
 
 #endif

@@ -33,8 +33,8 @@
 
 #define nftl_notifier_to_dev(l)	container_of(l, struct aml_nftl_dev, nb)
 
-extern struct aml_nftl_part_t;
-extern struct _ftl_status;
+struct aml_nftl_part_t;
+struct _ftl_status;
 
 struct aml_nftl_blk;
 

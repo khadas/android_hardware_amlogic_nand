@@ -103,7 +103,7 @@ static int aml_info_check_datasum(void *data,unsigned char *name)
 	if(!memcmp(name,BBT_HEAD_MAGIC,4)){
 		struct block_status *blk_status = (struct block_status *)data;
 		crc = blk_status->crc;
-		if(aml_info_checksum(blk_status->blk_status,(MAX_CHIP_NUM*MAX_BLK_NUM)) != crc){
+		if(aml_info_checksum((unsigned char *)(blk_status->blk_status),(MAX_CHIP_NUM*MAX_BLK_NUM)) != crc){
 			aml_nand_msg("aml_info_check_datasum : nand bbt  bad crc error");
 			ret = -NAND_READ_FAILED;
 		}
@@ -112,7 +112,7 @@ static int aml_info_check_datasum(void *data,unsigned char *name)
 	if(!memcmp(name,SHIPPED_BBT_HEAD_MAGIC,4)){
 		struct shipped_bbt * bbt = (struct shipped_bbt *)data;
 		crc = bbt->crc;
-		if(aml_info_checksum(bbt->shipped_bbt,(MAX_CHIP_NUM*MAX_BAD_BLK_NUM)) != crc){
+		if(aml_info_checksum((unsigned char *)(bbt->shipped_bbt),(MAX_CHIP_NUM*MAX_BAD_BLK_NUM)) != crc){
 			aml_nand_msg("aml_info_check_datasum : nand shipped bbt  bad crc error");
 			ret = -NAND_READ_FAILED;
 		}
@@ -121,7 +121,7 @@ static int aml_info_check_datasum(void *data,unsigned char *name)
 	if(!memcmp(name,CONFIG_HEAD_MAGIC,4)){
 			struct nand_config * config = (struct nand_config *)data;
 			crc = config->crc;
-			if(aml_info_checksum(config->dev_para,(MAX_DEVICE_NUM*sizeof(struct dev_para))) != crc){
+			if(aml_info_checksum((unsigned char *)(config->dev_para),(MAX_DEVICE_NUM*sizeof(struct dev_para))) != crc){
 				aml_nand_msg("aml_info_check_datasum : nand check config crc error");
 				ret = -NAND_READ_FAILED;
 			}
@@ -346,6 +346,8 @@ int repair_reserved_bad_block(struct amlnand_chip *aml_chip)
     unsigned char phys_erase_shift, phys_page_shift;
     int  ret =0,i = 0,j = 0;
     uint32_t bad_blk[128];
+	unsigned char *dat_buf =NULL;
+    unsigned char *oob_buf =NULL;
     memset(bad_blk,0,128*sizeof(uint32_t));
     offset = (1024 * flash->pagesize);
 
@@ -357,8 +359,6 @@ int repair_reserved_bad_block(struct amlnand_chip *aml_chip)
     start_blk = (offset >> phys_erase_shift);
     tmp_blk = total_blk = start_blk;
 
-	unsigned char *dat_buf =NULL;
-    unsigned char *oob_buf =NULL;
 	dat_buf  = aml_nand_malloc(flash->pagesize);
 	if(!dat_buf){
 		aml_nand_msg("amlnand_free_block_test : malloc failed");
@@ -606,8 +606,8 @@ void amlnand_info_error_handle(struct amlnand_chip *aml_chip)
 
 	if((nand_config->arg_valid)&&(nand_config->update_flag)){
 		//aml_nand_msg("amlnand_info_error_handle : update nand config");
-		aml_chip->config_ptr->crc = aml_info_checksum(aml_chip->config_ptr->dev_para,(MAX_DEVICE_NUM*sizeof(struct dev_para)));					
-		 ret = amlnand_save_info_by_name(aml_chip, &(aml_chip->config_msg),aml_chip->config_ptr,CONFIG_HEAD_MAGIC, sizeof(struct nand_config));
+		aml_chip->config_ptr->crc = aml_info_checksum((unsigned char *)(aml_chip->config_ptr->dev_para),(MAX_DEVICE_NUM*sizeof(struct dev_para)));					
+		 ret = amlnand_save_info_by_name(aml_chip,(unsigned char *) &(aml_chip->config_msg),(unsigned char *)aml_chip->config_ptr,CONFIG_HEAD_MAGIC, sizeof(struct nand_config));
 		nand_config->update_flag = 0;
 		aml_nand_msg("NAND UPDATE CKECK  : arg %s: arg_valid= %d, valid_blk_addr = %d, valid_page_addr = %d",\
 				"config",nand_config->arg_valid, nand_config->valid_blk_addr, nand_config->valid_page_addr);
@@ -648,7 +648,7 @@ int amlnand_read_info_by_name(struct amlnand_chip *aml_chip,unsigned char * info
 		offset = 0;
 	}
 
-	arg_oob_info = (struct nand_arg_oobinfo *)oob_buf;
+	arg_oob_info = (nand_arg_oobinfo *)oob_buf;
 	memset((unsigned char *)ops_para, 0x0, sizeof(struct chip_ops_para));
 
 	phys_erase_shift = ffs(flash->blocksize) - 1;
@@ -782,7 +782,7 @@ int amlnand_save_info_by_name(struct amlnand_chip *aml_chip,unsigned char * info
 		pages_read = pages_per_blk;
 	}
 	
-	arg_oob_info =(struct nand_arg_oobinfo *) oob_buf;
+	arg_oob_info =(nand_arg_oobinfo *) oob_buf;
 	arg_info->timestamp +=1;
 	arg_oob_info->timestamp = arg_info->timestamp;
 	
@@ -1106,7 +1106,7 @@ int amlnand_check_info_by_name(struct amlnand_chip *aml_chip,unsigned char * inf
 		offset = 0;
 	}
 
-	arg_oob_info = (struct nand_arg_oobinfo *)oob_buf;
+	arg_oob_info = (nand_arg_oobinfo *)oob_buf;
 	memset((unsigned char *)ops_para, 0x0, sizeof(struct chip_ops_para));
 
 	phys_erase_shift = ffs(flash->blocksize) - 1;
@@ -1126,7 +1126,7 @@ int amlnand_check_info_by_name(struct amlnand_chip *aml_chip,unsigned char * inf
 	tmp_blk = start_blk;
 	total_blk = (offset >> phys_erase_shift)+ RESERVED_BLOCK_CNT;
 #if 1
-	for(start_blk;start_blk < total_blk; start_blk++){
+	for(;start_blk < total_blk; start_blk++){
 		read_failed_page =0;
 		read_middle_page_failed = 0;
 		memset((unsigned char *)ops_para, 0x0, sizeof(struct chip_ops_para));
@@ -1426,9 +1426,9 @@ int amlnand_check_info_by_name(struct amlnand_chip *aml_chip,unsigned char * inf
 
 	return ret;
 	
-exit_error0:
+//exit_error0:
 
-	return ret;
+//	return ret;
 }
 
 
@@ -1445,14 +1445,14 @@ int amlnand_info_init(struct amlnand_chip *aml_chip,unsigned char * info,unsigne
 	
 	aml_nand_dbg("NAME :  %s",name);
 	
-	ret = amlnand_check_info_by_name(aml_chip, arg_info ,name,size);
+	ret = amlnand_check_info_by_name(aml_chip,(unsigned char *) arg_info ,name,size);
 	if(ret < 0){
 		aml_nand_msg("nand check info failed");
 		goto exit_error;
 	}
 
 	if(arg_info->arg_valid == 1){
-		ret = amlnand_read_info_by_name(aml_chip, arg_info,buf, name,size);
+		ret = amlnand_read_info_by_name(aml_chip,(unsigned char *)arg_info,buf, name,size);
 		if(ret < 0){
 			aml_nand_msg("nand check info success but read failed");
 			goto exit_error;
@@ -1510,8 +1510,8 @@ aml_nand_dbg("amlnand_update_bbt  :here!!");
 		}
 	}
 #endif
-	aml_chip->block_status->crc = aml_info_checksum(aml_chip->block_status->blk_status,(MAX_CHIP_NUM*MAX_BLK_NUM));
-	ret = amlnand_save_info_by_name(aml_chip,&(aml_chip->nand_bbtinfo),aml_chip->block_status,BBT_HEAD_MAGIC, sizeof(struct block_status));
+	aml_chip->block_status->crc = aml_info_checksum((unsigned char *)aml_chip->block_status->blk_status,(MAX_CHIP_NUM*MAX_BLK_NUM));
+	ret = amlnand_save_info_by_name(aml_chip,(unsigned char *)&(aml_chip->nand_bbtinfo),(unsigned char *)aml_chip->block_status,BBT_HEAD_MAGIC, sizeof(struct block_status));
 	if(ret < 0){
 		aml_nand_msg("nand update bbt failed");
 		goto exit_error0;
@@ -1615,9 +1615,9 @@ int amlnand_init_block_status(struct amlnand_chip *aml_chip)
 
 	return ret;
 	
-exit_error0:
+//exit_error0:
 
-	return ret;
+//	return ret;
 }
 
 #ifdef AML_NAND_UBOOT	
@@ -2274,8 +2274,8 @@ int aml_nand_scan_hynix_info(struct amlnand_chip *aml_chip)
 					aml_nand_msg("mfr_type:%x detect factory Bad block at read_cnt:%d and block:%d and chip:%d", \
 											controller->mfr_type, read_cnt, start_block, chipnr);
 					tmp_arr[factory_badblock_cnt] = start_block |0x8000;
-					//aml_nand_msg("start_block is bad block = %d, tmp_arr[factory_badblock_cnt] = %d", \
-						//start_block, tmp_arr[factory_badblock_cnt]);
+					/*aml_nand_msg("start_block is bad block = %d, tmp_arr[factory_badblock_cnt] = %d", 
+						start_block, tmp_arr[factory_badblock_cnt]);*/
 
 					if (start_block < start_blk){
 						aml_nand_msg("WARNING: UBOOT AREA  BLOCK %d IS BAD BLOCK",start_block);
@@ -2381,7 +2381,7 @@ static int amlnand_config_buf_malloc(struct amlnand_chip *aml_chip)
 	}
 	memset(aml_chip->user_page_buf,0x0,buf_size);
 
-	aml_chip->block_status = (unsigned short *)aml_nand_malloc(sizeof(struct block_status));
+	aml_chip->block_status = (struct block_status *)aml_nand_malloc(sizeof(struct block_status));
 	if (aml_chip->block_status == NULL){
 		aml_nand_msg("nand malloc memory failed for block_status and size:%x", sizeof(struct block_status));
 		ret = -NAND_MALLOC_FAILURE;
@@ -2496,7 +2496,7 @@ int amlnand_get_dev_configs(struct amlnand_chip *aml_chip)
 	amlnand_set_config_attribute(aml_chip);
 
 	//search  bbt
-	ret = amlnand_info_init(aml_chip, &(aml_chip->nand_bbtinfo),aml_chip->block_status,BBT_HEAD_MAGIC, sizeof(struct block_status));
+	ret = amlnand_info_init(aml_chip,(unsigned char *)&(aml_chip->nand_bbtinfo),(unsigned char *)aml_chip->block_status,BBT_HEAD_MAGIC, sizeof(struct block_status));
 	if(ret < 0){
 		aml_nand_msg("nand scan bbt info  failed :%d",ret);		
 		//goto exit_error0;
@@ -2604,7 +2604,7 @@ int amlnand_get_dev_configs(struct amlnand_chip *aml_chip)
 			}
 #endif
 
-		ret = amlnand_info_init(aml_chip, &(aml_chip->config_msg),aml_chip->config_ptr,CONFIG_HEAD_MAGIC, sizeof(struct nand_config));
+		ret = amlnand_info_init(aml_chip, (unsigned char *)&(aml_chip->config_msg),(unsigned char *)aml_chip->config_ptr,CONFIG_HEAD_MAGIC, sizeof(struct nand_config));
 		if(ret < 0){
 			aml_nand_msg("nand scan config failed and ret:%d",ret);	
 			//goto exit_error0;

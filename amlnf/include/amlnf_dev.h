@@ -92,6 +92,7 @@ struct amlnf_partition {
 	uint64_t size;			/* partition size */
 	uint64_t offset;		/* offset within the master space */
 	unsigned mask_flags;		/* master flags to mask out for this partition */
+	void *priv;
 };
 
 typedef enum {
@@ -406,7 +407,7 @@ extern int amlnf_pdev_register(struct amlnand_phydev *phydev);
 extern int amlnf_ldev_register(void);
 extern void amlchip_resume(struct amlnand_phydev *phydev);
 extern int phydev_suspend(struct amlnand_phydev *phydev);
-extern int phydev_resume(struct amlnand_phydev *phydev);
+extern void phydev_resume(struct amlnand_phydev *phydev);
 extern int amlphy_prepare(unsigned flag);
 
 extern int add_ntd_partitions(struct amlnand_phydev* master);

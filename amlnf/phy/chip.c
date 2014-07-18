@@ -318,6 +318,8 @@ static void nand_buf_free(struct amlnand_chip *aml_chip)
   * if without rb pin, then setting NAND_CTRL_NONE_RB mode
   * 
   */
+
+#ifndef CONFIG_NAND_AML_M8
 static void aml_chip_rb_mode_confirm(struct amlnand_chip *aml_chip)
 {
 	struct hw_controller *controller = &aml_chip->controller;
@@ -352,7 +354,7 @@ static void aml_chip_rb_mode_confirm(struct amlnand_chip *aml_chip)
 	}
 
 }
-
+#endif
 void amlchip_dumpinfo(struct amlnand_chip *aml_chip)
 {
 	struct hw_controller *controller = &(aml_chip->controller);
@@ -551,7 +553,7 @@ int amlchip_opstest(struct amlnand_chip *aml_chip)
 #else
 	nand_release_chip(aml_chip);
 #endif
-
+	return 0;
 }
 
 /*

@@ -230,12 +230,13 @@ static int write_uboot(struct amlnand_phydev *phydev)
 	struct chip_operation *operation = &(aml_chip->operation);	
 	struct chip_ops_para *ops_para = &(aml_chip->ops_para);
 	struct en_slc_info *slc_info = &(controller->slc_info);
-	unsigned char *fill_buf;
-	unsigned char *oob_buf, *page0_buf, tmp_bch_mode, tmp_user_mode, tmp_ecc_limit, tmp_ecc_max,tmp_rand;
+	unsigned char *fill_buf=NULL;
+	unsigned char *oob_buf, *page0_buf=NULL, tmp_bch_mode, tmp_user_mode, tmp_ecc_limit, tmp_ecc_max,tmp_rand;
 	unsigned configure_data, pages_per_blk, oobsize, page_size, tmp_size,priv_lsb,ops_tem; 
 	unsigned short tmp_ecc_unit, tmp_ecc_bytes, tmp_ecc_steps;
 	uint64_t addr, writelen = 0, len = 0;
 	int  i, ret = 0;
+	unsigned char * lazy_buf = devops->datbuf;
 	//unsigned char  *tmp_buf;
 	
 	if((devops->addr + devops->len) >  phydev->size){
@@ -317,7 +318,6 @@ static int write_uboot(struct amlnand_phydev *phydev)
 	aml_nand_msg("configure_data:%x, pages_per_blk:%x", configure_data, pages_per_blk);
 
 	nand_boot_info_prepare(phydev,page0_buf);
-	unsigned char * lazy_buf = devops->datbuf;
 	for(i=0; i<BOOT_COPY_NUM; i++){
 		writelen = 0;
 		addr = 0;
@@ -507,7 +507,7 @@ int roomboot_nand_write(struct amlnand_phydev *phydev)
 	
 			ret = operation->erase_block(aml_chip);
 			if(ret<0){
-				aml_nand_msg("nand erase fail at addr :%lx ", ops_para->page_addr);
+				aml_nand_msg("nand erase fail at addr :%x ", ops_para->page_addr);
 				break;
 			}
 			

@@ -352,7 +352,7 @@ int nand_erase(struct amlnand_phydev *phydev)
 
 		ret = operation->erase_block(aml_chip);
 		if(ret<0){
-			aml_nand_msg("nand erase fail at addr :%lx ", ops_para->page_addr);
+			aml_nand_msg("nand erase fail at addr :%x ", ops_para->page_addr);
 			break;
 		}
 		
@@ -819,15 +819,15 @@ ssize_t nand_page_write(struct class *class, struct class_attribute *attr, const
 	//struct chip_ops_para *ops_para = &(aml_chip->ops_para);
 	//struct nand_flash *flash = &(aml_chip->flash);	
 	struct phydev_ops  *devops = &(phydev->ops);
-	aml_nand_dbg("phydev->name =%s",phydev->name);
-	aml_nand_dbg("write page");
+    u_char *datbuf;
 
-    	u_char *datbuf;
 	uint64_t offset , write_len;
 	loff_t off;
 	size_t ret;
 	//int i;
 	
+	aml_nand_dbg("phydev->name =%s",phydev->name);
+	aml_nand_dbg("write page");
    	ret = sscanf(buf, "%llx", &off);
 	datbuf = kmalloc(2*phydev->writesize, GFP_KERNEL);
 	if (!datbuf ) {
@@ -888,7 +888,7 @@ ssize_t verify_nand_page(struct class *class, struct class_attribute *attr, cons
 	unsigned char  off;
 	size_t ret;
 
-	ret = sscanf(buf, "%d", &off);
+	ret = sscanf(buf, "%d", (int *)&off);
 
 	aml_chip->debug_flag = off;
 	
@@ -1014,7 +1014,7 @@ ssize_t show_amlnf_version_info(struct class *class, struct class_attribute *att
 #endif
 
 
-static void show_phydev_info()
+static void show_phydev_info(void)
 {
 	struct amlnand_phydev *phydev = NULL;
 	struct amlnf_partition *partition = NULL;
@@ -1066,7 +1066,13 @@ int amlnand_phydev_init(struct amlnand_chip *aml_chip)
 	unsigned start_blk, total_blk, tmp_write_shift, tmp_erase_shift, tmp_offset=0, tmp_blk = 0, pages_per_blk,bad_blk_cnt =0;
 	unsigned char boot_flag = 0, plane_num = 1;
 	int i, j, k, ret = 0;	
-    uint64_t bad_blk[128];
+    uint64_t *bad_blk = NULL;
+    bad_blk = aml_nand_malloc(128*sizeof(uint64_t));
+	if(bad_blk == NULL){
+		aml_nand_msg("malloc failed");
+		ret = -NAND_MALLOC_FAILURE;
+		goto exit_error0;
+	}
     memset(bad_blk,0,128*sizeof(uint64_t));
 	if(flash->option & NAND_MULTI_PLANE_MODE){
 		plane_num = 2;
@@ -1401,10 +1407,16 @@ int amlnand_phydev_init(struct amlnand_chip *aml_chip)
 	}
 
 #endif
+	if(bad_blk != NULL){
+        aml_nand_free(bad_blk);
+	}
 
 	return NAND_SUCCESS;
 	
 exit_error0:
+	if(bad_blk != NULL){
+        aml_nand_free(bad_blk);
+	}
 	return ret;
 }
 

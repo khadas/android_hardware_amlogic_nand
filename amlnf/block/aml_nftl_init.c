@@ -34,19 +34,19 @@ extern void print_block_invalid_list(struct aml_nftl_part_t* part);
 extern  int get_adjust_block_num(void);
 extern int aml_nftl_erase_part(struct aml_nftl_part_t *part);
 extern int aml_nftl_set_status(struct aml_nftl_part_t *part,unsigned char status);
-uint32 _nand_read(struct aml_nftl_dev *nftl_dev,uint32 start_sector,uint32 len,unsigned char *buf);
-uint32 _nand_write(struct aml_nftl_dev *nftl_dev,uint32 start_sector,uint32 len,unsigned char *buf);
+uint32 _nand_read(struct aml_nftl_dev *nftl_dev,unsigned long start_sector,unsigned len,unsigned char *buf);
+uint32 _nand_write(struct aml_nftl_dev *nftl_dev,unsigned long  start_sector,unsigned len,unsigned char *buf);
 uint32 _nand_flush_write_cache(struct aml_nftl_dev *nftl_dev);
 uint32 _blk_nand_flush_write_cache(struct aml_nftl_blk *nftl_blk);
-uint32 _blk_nand_write(struct aml_nftl_blk *nftl_blk,uint32 start_sector,uint32 len,unsigned char *buf);
-uint32 _blk_nand_read(struct aml_nftl_blk *nftl_blk,uint32 start_sector,uint32 len,unsigned char *buf);
+uint32 _blk_nand_write(struct aml_nftl_blk *nftl_blk,unsigned long start_sector,unsigned  len,unsigned char *buf);
+uint32 _blk_nand_read(struct aml_nftl_blk *nftl_blk,unsigned long start_sector,unsigned len,unsigned char *buf);
 
 void *aml_nftl_malloc(uint32 size);
 void aml_nftl_free(const void *ptr);
 //int aml_nftl_dbg(const char * fmt,args...);
 
-static ssize_t show_part_struct(struct class *class,struct class_attribute *attr,char *buf);
-static ssize_t show_list(struct class *class, struct class_attribute *attr, const char *buf);
+static ssize_t show_part_struct(struct class *class,struct class_attribute *attr, char *buf);
+static ssize_t show_list(struct class *class, struct class_attribute *attr,  char *buf);
 static ssize_t do_gc_all(struct class *class, struct class_attribute *attr,	const char *buf, size_t count);
 static ssize_t do_gc_one(struct class *class, struct class_attribute *attr,	const char *buf, size_t count);
 static ssize_t do_test(struct class *class, struct class_attribute *attr,	const char *buf, size_t count);
@@ -102,9 +102,9 @@ void aml_nftl_free(const void *ptr)
 int aml_nftl_initialize(struct aml_nftl_dev *nftl_dev,int no)
 {
 	struct ntd_info *ntd = nftl_dev->ntd;
-	int error = 0, phy_blk_num, oob_len;
-	uint32_t phy_page_addr, size_in_blk,total_block,total_pages,temp,i;
-	uint32_t phys_erase_shift;
+	int error = 0;
+	
+	//uint32_t phys_erase_shift;
 	uint32_t ret;
 
 	if (ntd->oobsize < MIN_BYTES_OF_USER_PER_PAGE)
@@ -153,7 +153,7 @@ int aml_nftl_initialize(struct aml_nftl_dev *nftl_dev,int no)
     if(memcmp(ntd->name, "nfcode", 6)==0)
     {
 		nftl_dev->debug.name = kzalloc(strlen((const char*)AML_NFTL1_MAGIC)+1, GFP_KERNEL);
-    	strcpy(nftl_dev->debug.name, (char*)AML_NFTL1_MAGIC);
+    	strcpy((char *)nftl_dev->debug.name, (char*)AML_NFTL1_MAGIC);
     	nftl_dev->debug.class_attrs = nftl_class_attrs;
    		error = amlnf_class_register(&nftl_dev->debug);
 		if(error)
@@ -163,7 +163,7 @@ int aml_nftl_initialize(struct aml_nftl_dev *nftl_dev,int no)
 	if(memcmp(ntd->name, "nfdata", 6)==0)
     {
 		nftl_dev->debug.name = kzalloc(strlen((const char*)AML_NFTL2_MAGIC)+1, GFP_KERNEL);
-    	strcpy(nftl_dev->debug.name, (char*)AML_NFTL2_MAGIC);
+    	strcpy((char *)nftl_dev->debug.name, (char*)AML_NFTL2_MAGIC);
     	nftl_dev->debug.class_attrs = nftl_class_attrs;
    		error = amlnf_class_register(&nftl_dev->debug);
 		if(error)
@@ -225,12 +225,12 @@ int aml_blktrans_initialize(struct aml_nftl_blk *nftl_blk,struct aml_nftl_dev *n
 *Return       :
 *Note         :
 *****************************************************************************/
-uint32 _nand_read(struct aml_nftl_dev *nftl_dev,uint32 start_sector,uint32 len,unsigned char *buf)
+uint32 _nand_read(struct aml_nftl_dev *nftl_dev,unsigned long start_sector,unsigned len,unsigned char *buf)
 {
     return __nand_read(nftl_dev->aml_nftl_part,start_sector,len,buf);
 }
 
-uint32 _blk_nand_read(struct aml_nftl_blk *nftl_blk,uint32 start_sector,uint32 len,unsigned char *buf)
+uint32 _blk_nand_read(struct aml_nftl_blk *nftl_blk,unsigned long  start_sector,unsigned len,unsigned char *buf)
 {	
 	int ret = 0;
 
@@ -247,7 +247,7 @@ uint32 _blk_nand_read(struct aml_nftl_blk *nftl_blk,uint32 start_sector,uint32 l
 *Return       :
 *Note         :
 *****************************************************************************/
-uint32 _nand_write(struct aml_nftl_dev *nftl_dev,uint32 start_sector,uint32 len,unsigned char *buf)
+uint32 _nand_write(struct aml_nftl_dev *nftl_dev,unsigned long start_sector,unsigned len,unsigned char *buf)
 {
     uint32 ret;
     ret = __nand_write(nftl_dev->aml_nftl_part,start_sector,len,buf,nftl_dev->sync_flag);
@@ -255,7 +255,7 @@ uint32 _nand_write(struct aml_nftl_dev *nftl_dev,uint32 start_sector,uint32 len,
     return ret;
 }
 
-uint32 _blk_nand_write(struct aml_nftl_blk *nftl_blk,uint32 start_sector,uint32 len,unsigned char *buf)
+uint32 _blk_nand_write(struct aml_nftl_blk *nftl_blk,unsigned long start_sector,unsigned  len,unsigned char *buf)
 {
     uint32 ret;
     ret = _nand_write(nftl_blk->nftl_dev,start_sector + nftl_blk->offset,len,buf);
@@ -291,7 +291,7 @@ uint32 _blk_nand_flush_write_cache(struct aml_nftl_blk *nftl_blk)
 *Return       :
 *Note         :
 *****************************************************************************/
-static ssize_t show_part_struct(struct class *class,struct class_attribute *attr,char *buf)
+static ssize_t show_part_struct(struct class *class,struct class_attribute *attr, char *buf)
 {
     struct aml_nftl_dev *nftl_dev = container_of(class, struct aml_nftl_dev, debug);
 
@@ -307,7 +307,7 @@ static ssize_t show_part_struct(struct class *class,struct class_attribute *attr
 *Return       :
 *Note         :
 *****************************************************************************/
-static ssize_t show_list(struct class *class, struct class_attribute *attr, const char *buf)
+static ssize_t show_list(struct class *class, struct class_attribute *attr,  char *buf)
 {
     struct aml_nftl_dev *nftl_dev = container_of(class, struct aml_nftl_dev, debug);
 
@@ -360,7 +360,7 @@ static ssize_t do_test(struct class *class, struct class_attribute *attr,	const 
     struct aml_nftl_dev *nftl_dev = container_of(class, struct aml_nftl_dev, debug);
     struct aml_nftl_part_t *part = nftl_dev -> aml_nftl_part;
 
-	uint32 num;
+	unsigned int num;
 
 	sscanf(buf, "%x", &num);
 

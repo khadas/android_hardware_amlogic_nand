@@ -57,18 +57,19 @@ void aml_nand_free(const void *ptr)
 #ifndef AML_NAND_UBOOT
 void *amlnf_dma_malloc(uint32 size, unsigned char flag)
 {
-	if(flag = 0) //data
+	if(flag == 0) //data
 		return dma_alloc_coherent(NULL, size, &nfdata_dma_addr, GFP_KERNEL);
-	if(flag = 1) //usr
+	if(flag == 1) //usr
 		return dma_alloc_coherent(NULL, size, &nfinfo_dma_addr, GFP_KERNEL);
+	return NULL;
 }
 
 void amlnf_dma_free(const void *ptr, unsigned size, unsigned char flag)
 {
-	if(flag = 0) //data
-		dma_free_coherent(NULL, size, ptr,nfdata_dma_addr);
-	if(flag = 1) //usr
-		dma_free_coherent(NULL, size, ptr, nfinfo_dma_addr);
+	if(flag == 0) //data
+		dma_free_coherent(NULL, size, (void *)ptr,nfdata_dma_addr);
+	if(flag == 1) //usr
+		dma_free_coherent(NULL, size, (void *)ptr, nfinfo_dma_addr);
 }
 #endif
 
@@ -136,10 +137,10 @@ int phydev_suspend(struct amlnand_phydev *phydev)
 
 }
 
-int phydev_resume(struct amlnand_phydev *phydev)
+void phydev_resume(struct amlnand_phydev *phydev)
 {
 	amlchip_resume(phydev);
-	return 0;
+	return;
 }
 int nand_idleflag=0;
 #define	NAND_CTRL_NONE_RB 						(1<<1)
@@ -434,12 +435,18 @@ void get_sys_clk_rate(int * rate)
 	struct amlnand_chip *aml_chip = (struct amlnand_chip *)phydev->priv;	
 	struct nand_flash *flash = &(aml_chip->flash);
 //	struct phydev_ops *devops = &(phydev->ops);
-	struct hw_controller *controller = &(aml_chip->controller); 
+	struct hw_controller *controller = &(aml_chip->controller);
+#ifdef CONFIG_NAND_AML_M8
 	struct en_slc_info *slc_info = &(controller->slc_info);
-	
+	int i;
+#endif
 	unsigned en_slc,configure_data, pages_per_blk; 
-	int chip_num=1, nand_read_info, new_nand_type, i;
+	int chip_num=1, nand_read_info, new_nand_type;
 
+#ifdef CONFIG_NAND_AML_M8
+	struct nand_page0_cfg_t *info_cfg = NULL;
+	struct nand_page0_info_t *info = NULL;
+#endif
 	pages_per_blk = flash->blocksize / flash->pagesize;
 	new_nand_type = aml_chip->flash.new_type;
 	//en_slc = (( flash->new_type < 10)&&( flash->new_type))? 1:0;
@@ -458,8 +465,8 @@ void get_sys_clk_rate(int * rate)
 	
 	memset(page0_buf, 0x0, flash->pagesize);
 
-	struct nand_page0_cfg_t *info_cfg = (struct nand_page0_cfg_t *)page0_buf;
-	struct nand_page0_info_t *info = (struct nand_page0_info_t *)((page0_buf+384)-sizeof(struct nand_page0_info_t));
+	info_cfg = (struct nand_page0_cfg_t *)page0_buf;
+	info = (struct nand_page0_info_t *)((page0_buf+384)-sizeof(struct nand_page0_info_t));
 
 	info_cfg->ext = (configure_data|(1<<23) |(1<<22) | (2<<20) |(1<<19));
 
@@ -571,7 +578,7 @@ int aml_sys_info_init(struct amlnand_chip *aml_chip)
 	
 #ifdef CONFIG_AML_NAND_KEY
 	if(nand_key->arg_valid == 0){
-		ret = amlnand_save_info_by_name(aml_chip,&(aml_chip->nand_key),buf, KEY_INFO_HEAD_MAGIC,CONFIG_KEYSIZE);
+		ret = amlnand_save_info_by_name(aml_chip,(unsigned char *)(&(aml_chip->nand_key)),buf, KEY_INFO_HEAD_MAGIC,CONFIG_KEYSIZE);
 		if(ret < 0){
 			aml_nand_msg("nand save default key failed");
 			goto exit_error;

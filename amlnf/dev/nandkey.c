@@ -18,7 +18,7 @@
 #include <linux/amlogic/securitykey.h>
 #endif
 
-#define KEYSIZE (CONFIG_KEYSIZE - (sizeof(uint32_t)))
+//#define KEYSIZE (CONFIG_KEYSIZE - (sizeof(uint32_t)))
 
 extern wait_queue_head_t amlnf_wq;
 
@@ -37,7 +37,7 @@ static struct amlnand_chip *aml_chip_key = NULL;
 		if(key_buf == NULL)
 			return -ENOMEM;
 		memset(key_buf,0,CONFIG_KEYSIZE);
-		ret = amlnand_read_info_by_name(aml_chip, &(aml_chip->nand_key),key_buf,KEY_INFO_HEAD_MAGIC, CONFIG_KEYSIZE);
+		ret = amlnand_read_info_by_name(aml_chip, (unsigned char *)&(aml_chip->nand_key),key_buf,KEY_INFO_HEAD_MAGIC, CONFIG_KEYSIZE);
 		if (ret) {
 			aml_nand_msg("read key error,%s\n",__func__);
 			ret = -EFAULT;
@@ -50,7 +50,7 @@ static struct amlnand_chip *aml_chip_key = NULL;
 	aml_nand_msg("aml_chip->nand_key : arg_type%d valid %d,update_flag %d,valid_blk_addr %d,valid_page_addr %d",aml_chip->nand_key.arg_type,aml_chip->nand_key.arg_valid,\
 		aml_chip->nand_key.update_flag,aml_chip->nand_key.valid_blk_addr,aml_chip->nand_key.valid_page_addr);
 	
-	ret = amlnand_save_info_by_name( aml_chip,&(aml_chip->nand_key),key_buf, KEY_INFO_HEAD_MAGIC,CONFIG_KEYSIZE);
+	ret = amlnand_save_info_by_name( aml_chip,(unsigned char *)&(aml_chip->nand_key),key_buf, KEY_INFO_HEAD_MAGIC,CONFIG_KEYSIZE);
 	if(ret < 0){
 		aml_nand_msg("aml_nand_update_key : save key info failed");
 	}
@@ -83,7 +83,7 @@ static int32_t nand_key_read(aml_keybox_provider_t * provider, uint8_t *buf,int 
 	amlnand_get_device(aml_chip, CHIP_READING);
 	memset(key_ptr,0,CONFIG_KEYSIZE);
 
-	error = amlnand_read_info_by_name(aml_chip, &(aml_chip->nand_key),key_ptr,KEY_INFO_HEAD_MAGIC, CONFIG_KEYSIZE);
+	error = amlnand_read_info_by_name(aml_chip, (unsigned char *)&(aml_chip->nand_key),(unsigned char *)key_ptr,KEY_INFO_HEAD_MAGIC, CONFIG_KEYSIZE);
 	//error = aml_nand_read_key(aml_chip, (u_char *)key_ptr);
 	if (error) 
 	{
@@ -118,7 +118,7 @@ static int32_t nand_key_write(aml_keybox_provider_t * provider, uint8_t *buf,int
 	memcpy(key_ptr->data + 0, buf, len);
 	amlnand_get_device(aml_chip, CHIP_WRITING);
 
-	error = amlnand_save_info_by_name(aml_chip, &(aml_chip->nand_key),key_ptr,KEY_INFO_HEAD_MAGIC, CONFIG_KEYSIZE);
+	error = amlnand_save_info_by_name(aml_chip,(unsigned char *) &(aml_chip->nand_key),(unsigned char *)key_ptr,KEY_INFO_HEAD_MAGIC, CONFIG_KEYSIZE);
 	if (error) 
 	{
 		printk("save key error,%s\n",__func__);
@@ -152,7 +152,7 @@ int aml_key_init(struct amlnand_chip *aml_chip)
 	memset(key_ptr,0x0,CONFIG_KEYSIZE);
 	aml_nand_dbg("nand key: nand_key_probe. ");
 
-	ret = amlnand_info_init(aml_chip, &(aml_chip->nand_key),key_ptr,KEY_INFO_HEAD_MAGIC, CONFIG_KEYSIZE);
+	ret = amlnand_info_init(aml_chip, (unsigned char *)&(aml_chip->nand_key),(unsigned char *)key_ptr,KEY_INFO_HEAD_MAGIC, CONFIG_KEYSIZE);
 	if(ret < 0){
 		aml_nand_msg("invalid nand key\n");
 	}

@@ -161,6 +161,7 @@ static int set_reg_value_hynix(struct hw_controller *controller,  unsigned char 
 
 	return 0;
 }
+#if 0
 static int aml_nand_get_20nm_OTP_value(struct hw_controller *controller,  unsigned char *buf,unsigned char chipnr)
 {
 	int i, j, k, reg_cnt_otp, total_reg_cnt, check_flag = 0;
@@ -271,6 +272,8 @@ static int aml_nand_get_1ynm_OTP_value(struct hw_controller *controller,  unsign
 	}
 	return 0;
 }
+#endif
+#ifdef AML_NAND_UBOOT		
 static int get_reg_value_formOTP_hynix(struct hw_controller *controller, unsigned char chipnr)
 {
 	struct amlnand_chip *aml_chip = controller->aml_chip;
@@ -455,7 +458,7 @@ error_exit1:
 error_exit0:
 	return ret;
 }
-
+#endif
 /* init default offset value here, 
 ** first time, for 26nm, read directly from nand reg,
 ** first time, for 20nm, read from nand otp area
@@ -520,7 +523,7 @@ static int readretry_init_hynix(struct hw_controller *controller)
 
 #endif
 
-error_exit:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+//error_exit:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
 	return ret;
 }
 
@@ -571,6 +574,7 @@ static int readretry_handle_hynix(struct hw_controller *controller, unsigned cha
 	//cur_cnt++;
 	//retry_info->cur_cnt_lp[chipnr] = (cur_cnt > (retry_info->retry_cnt_lp -1)) ? 0 : cur_cnt;
 	retry_info->cur_cnt_lp[chipnr]++;
+	return 0;
 }
 
 static int readretry_set_def_val_hynix(struct hw_controller *controller, unsigned char chipnr)
@@ -1397,7 +1401,7 @@ static int enslc_enter_sandisk(struct hw_controller *controller)
 			slc_info->init = enslc_init_hynix;	
 			slc_info->enter = enslc_enter_hynix;
 			slc_info->exit = enslc_exit_hynix;
-			slc_info->pagelist = &pagelist_hynix256;
+			slc_info->pagelist = pagelist_hynix256;
 			break;
 			
 		case HYNIX_26NM_8GB:	//hynix 26nm 8GB
@@ -1464,7 +1468,7 @@ static int enslc_enter_sandisk(struct hw_controller *controller)
 			slc_info->init = enslc_init_hynix;	
 			slc_info->enter = enslc_enter_hynix;
 			slc_info->exit = enslc_exit_hynix;
-			slc_info->pagelist = &pagelist_hynix256;
+			slc_info->pagelist = pagelist_hynix256;
 
 			break;
 			
@@ -1506,7 +1510,7 @@ static int enslc_enter_sandisk(struct hw_controller *controller)
 			slc_info->init = enslc_init_hynix;	
 			slc_info->enter = enslc_enter_hynix;
 			slc_info->exit = enslc_exit_hynix;
-			slc_info->pagelist = &pagelist_hynix256;
+			slc_info->pagelist = pagelist_hynix256;
 			break;
 
 		case HYNIX_20NM_8GB:	//hynix 20nm 8GB
@@ -1547,7 +1551,7 @@ static int enslc_enter_sandisk(struct hw_controller *controller)
 			slc_info->init = enslc_init_hynix;	
 			slc_info->enter = enslc_enter_hynix;
 			slc_info->exit = enslc_exit_hynix;
-			slc_info->pagelist = &pagelist_hynix256;
+			slc_info->pagelist = pagelist_hynix256;
 			break;
 			
 		case HYNIX_1YNM_8GB:	//hynix 20nm 8GB
@@ -1564,7 +1568,7 @@ static int enslc_enter_sandisk(struct hw_controller *controller)
 			slc_info->init = enslc_init_hynix;	
 			slc_info->enter = enslc_enter_hynix;
 			slc_info->exit = enslc_exit_hynix;
-			slc_info->pagelist = &pagelist_1ynm_hynix256;
+			slc_info->pagelist = pagelist_1ynm_hynix256;
 			break;			
 			case TOSHIBA_2XNM:	//toshiba 24nm/19nm TOSHIBA_2XNM
 				//read retry

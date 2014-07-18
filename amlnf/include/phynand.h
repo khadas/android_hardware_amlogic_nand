@@ -21,7 +21,7 @@
 #ifdef CONFIG_NAND_AML_M8
 #define NAND_MFR_USER          0x100 
 #define NAND_MFR_EFUSE         0x101 
-#define abs(value) (((value) < 0) ? ((value)*-1) : (value))
+//#define abs(value) (((value) < 0) ? ((value)*-1) : (value))
 /*
  ** Max page list cnt for usrdef mode
   */
@@ -120,7 +120,7 @@ typedef union nand_core_clk {
 #define 	FBBT_COPY_NUM  						1
 
 #define CONFIG_KEYSIZE         		0x1000
-#define KEYSIZE  (CONFIG_KEYSIZE - 2*(sizeof(uint32_t)))
+#define KEYSIZE  (CONFIG_KEYSIZE - (sizeof(uint32_t)))
 
 #define CONFIG_SECURE_SIZE         		(0x10000*2) //128k
 #define SECURE_SIZE (CONFIG_SECURE_SIZE - 2*(sizeof(uint32_t)))
@@ -385,6 +385,7 @@ typedef union nand_core_clk {
 #define 	SANDISK_A19NM								42
 #define      MICRON_20NM								50
 
+struct hw_controller;
 struct read_retry_info
 {
 	unsigned char	flag;

@@ -34,7 +34,7 @@ int aml_nand_update_ubootenv(struct amlnand_chip * aml_chip, char *env_ptr)
 		if(env_buf == NULL)
 			return -ENOMEM;
 		memset(env_buf,0,CONFIG_ENV_SIZE);
-		ret = amlnand_read_info_by_name(aml_chip, &(aml_chip->uboot_env),env_buf,ENV_INFO_HEAD_MAGIC, CONFIG_ENV_SIZE);
+		ret = amlnand_read_info_by_name(aml_chip, (unsigned char *)&(aml_chip->uboot_env),env_buf,ENV_INFO_HEAD_MAGIC, CONFIG_ENV_SIZE);
 		if (ret) 
 		{
 			aml_nand_msg("read ubootenv error,%s\n",__func__);
@@ -45,7 +45,7 @@ int aml_nand_update_ubootenv(struct amlnand_chip * aml_chip, char *env_ptr)
 		env_buf = env_ptr;
 	}
 	
-	ret = amlnand_save_info_by_name(aml_chip, &(aml_chip->uboot_env),env_buf,ENV_INFO_HEAD_MAGIC, CONFIG_ENV_SIZE);
+	ret = amlnand_save_info_by_name(aml_chip, (unsigned char *)&(aml_chip->uboot_env),env_buf,ENV_INFO_HEAD_MAGIC, CONFIG_ENV_SIZE);
 	if(ret < 0){
 		aml_nand_msg("aml_nand_update_secure : update secure failed");
 	}
@@ -65,7 +65,7 @@ int uboot_env_open (struct inode *node, struct file *file)
 ssize_t uboot_env_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 {
 	unsigned char *env_ptr = NULL;
-	ssize_t read_size;
+	ssize_t read_size=0;
 	int ret=0;
 	if(*ppos == CONFIG_ENV_SIZE){
 		return 0;
@@ -108,10 +108,10 @@ exit:
 	return read_size;
 }
 
-ssize_t uboot_env_write(struct file *file, char __user * buf, size_t count, loff_t *ppos)
+ssize_t uboot_env_write(struct file *file, const char __user * buf, size_t count, loff_t *ppos)
 {
 	unsigned char *env_ptr = NULL;
-	ssize_t write_size;
+	ssize_t write_size=0;
 	int ret = 0;
 	if(*ppos == CONFIG_ENV_SIZE){
 		return 0;
@@ -235,7 +235,7 @@ int amlnf_env_save(unsigned char *buf,int len)
 	memset(env_buf,0,CONFIG_ENV_SIZE);
 	memcpy(env_buf, buf, len);
 
-	ret = amlnand_save_info_by_name(aml_chip_env, &(aml_chip_env->uboot_env),env_buf,ENV_INFO_HEAD_MAGIC, CONFIG_ENV_SIZE);
+	ret = amlnand_save_info_by_name(aml_chip_env, (unsigned char *)&(aml_chip_env->uboot_env),env_buf,ENV_INFO_HEAD_MAGIC, CONFIG_ENV_SIZE);
 	if (ret) {
 		aml_nand_msg("nand uboot env error,%s",__func__);
 		ret = -EFAULT;
@@ -278,7 +278,7 @@ int amlnf_env_read(unsigned char *buf,int len)
 	}
 	memset(env_buf,0,CONFIG_ENV_SIZE);
 
-	ret = amlnand_read_info_by_name(aml_chip_env, &(aml_chip_env->uboot_env),(unsigned char*)env_buf,ENV_INFO_HEAD_MAGIC, CONFIG_ENV_SIZE);
+	ret = amlnand_read_info_by_name(aml_chip_env, (unsigned char*)&(aml_chip_env->uboot_env),(unsigned char*)env_buf,ENV_INFO_HEAD_MAGIC, CONFIG_ENV_SIZE);
 	if (ret) {
 		aml_nand_msg("nand uboot env error,%s",__func__);
 		ret = -EFAULT;
@@ -309,7 +309,7 @@ int aml_ubootenv_init(struct amlnand_chip *aml_chip)
 	}
 	memset(env_buf,0x0,CONFIG_ENV_SIZE);
 	
-	ret = amlnand_info_init(aml_chip, &(aml_chip->uboot_env),env_buf,ENV_INFO_HEAD_MAGIC, CONFIG_ENV_SIZE);
+	ret = amlnand_info_init(aml_chip, (unsigned char *)&(aml_chip->uboot_env),env_buf,ENV_INFO_HEAD_MAGIC, CONFIG_ENV_SIZE);
 	if(ret < 0){
 		aml_nand_msg("aml_ubootenv_init failed\n");
 		ret = -1;

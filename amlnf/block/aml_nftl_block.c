@@ -207,6 +207,7 @@ uint32 write_sync_flag(struct aml_nftl_blk *aml_nftl_blk)
 			if(aml_nftl_blk->req->cmd_flags & REQ_SYNC)
 				nftl_dev->sync_flag = 1;
 		}
+	return 0;
 #else
 	return 0;
 #endif
@@ -220,13 +221,13 @@ uint32 write_sync_flag(struct aml_nftl_blk *aml_nftl_blk)
 *****************************************************************************/
 int aml_nftl_init_bounce_buf(struct ntd_blktrans_dev *dev, struct request_queue *rq)
 {
-    int ret=0, i;
+    int ret=0;
     unsigned int bouncesz;
     struct aml_nftl_blk *nftl_blk = (void *)dev;
 
     if(nftl_blk->queue && nftl_blk->bounce_sg)
     {
-        aml_nftl_dbg("_nftl_init_bounce_buf already init %x\n",PAGE_CACHE_SIZE);
+        aml_nftl_dbg("_nftl_init_bounce_buf already init %lx\n",PAGE_CACHE_SIZE);
         return 0;
     }
     nftl_blk->queue = rq;
@@ -270,13 +271,6 @@ static int do_nftltrans_request(struct ntd_blktrans_ops *tr,struct ntd_blktrans_
     int ret = 0, segments, i;
     unsigned long block, nblk, blk_addr, blk_cnt;
 
-    if(!nftl_blk->queue || !nftl_blk->bounce_sg)
-    {
-        if (aml_nftl_init_bounce_buf(&nftl_blk->nbd, nftl_blk->nbd.rq))
-        {
-            aml_nftl_dbg("_nftl_init_bounce_buf  failed\n");
-        }
-    }
 
     unsigned short max_segm = queue_max_segments(nftl_blk->queue);
     unsigned *buf_addr[max_segm+1];
@@ -284,6 +278,13 @@ static int do_nftltrans_request(struct ntd_blktrans_ops *tr,struct ntd_blktrans_
     size_t buflen;
     char *buf;
 
+    if(!nftl_blk->queue || !nftl_blk->bounce_sg)
+    {
+        if (aml_nftl_init_bounce_buf(&nftl_blk->nbd, nftl_blk->nbd.rq))
+        {
+            aml_nftl_dbg("_nftl_init_bounce_buf  failed\n");
+        }
+    }
     memset((unsigned char *)buf_addr, 0, (max_segm+1)*4);
     memset((unsigned char *)offset_addr, 0, (max_segm+1)*4);
     nftl_blk->req = req;
@@ -463,7 +464,7 @@ int aml_nftl_reinit_part(struct aml_nftl_dev * nftl_dev)
        return ret ;
 }
 
-static void aml_nftl_wipe_part(struct ntd_blktrans_dev *dev)
+static int aml_nftl_wipe_part(struct ntd_blktrans_dev *dev)
 {
     	struct aml_nftl_blk *nftl_blk = (void *)dev;
 	struct aml_nftl_dev * nftl_dev = nftl_blk->nftl_dev;
@@ -472,7 +473,7 @@ static void aml_nftl_wipe_part(struct ntd_blktrans_dev *dev)
 	if(error){
 		PRINT("aml_nftl_reinit_part: failed\n");
 	}
-	return;
+	return error;
 }
 
 /*****************************************************************************
@@ -488,7 +489,7 @@ static void aml_nftl_add_ntd(struct ntd_blktrans_ops *tr, struct ntd_info *ntd)
     struct aml_nftl_dev *nftl_dev;
     struct aml_nftl_blk *nftl_blk;
     uint64_t cur_offset = 0;
-    uint64_t cur_size;
+    //uint64_t cur_size;
     struct ntd_partition *part;
 
     PRINT("ntd->name: %s\n",ntd->name);

@@ -348,16 +348,16 @@ void print_ntd(struct ntd_info *ntd)
 {
     printk("ntd->name %s \n",ntd->name);
     printk("ntd->offset %llx \n",ntd->offset);
-    printk("ntd->flags %x \n",ntd->flags);
+    printk("ntd->flags %lx \n",ntd->flags);
     printk("ntd->size %llx \n",ntd->size);
-    printk("ntd->blocksize %d \n",ntd->blocksize);
-    printk("ntd->pagesize %d \n",ntd->pagesize);
-    printk("ntd->oobsize %d \n",ntd->oobsize);
-    printk("ntd->blocksize_shift %d \n",ntd->blocksize_shift);
-    printk("ntd->pagesize_shift %d \n",ntd->pagesize_shift);
-    printk("ntd->blocksize_mask %d \n",ntd->blocksize_mask);
-    printk("ntd->pagesize_mask %d \n",ntd->pagesize_mask);
-    printk("ntd->index %d \n",ntd->index);
+    printk("ntd->blocksize %ld \n",ntd->blocksize);
+    printk("ntd->pagesize %ld \n",ntd->pagesize);
+    printk("ntd->oobsize %ld \n",ntd->oobsize);
+    printk("ntd->blocksize_shift %ld \n",ntd->blocksize_shift);
+    printk("ntd->pagesize_shift %ld \n",ntd->pagesize_shift);
+    printk("ntd->blocksize_mask %ld \n",ntd->blocksize_mask);
+    printk("ntd->pagesize_mask %ld \n",ntd->pagesize_mask);
+    printk("ntd->index %ld \n",ntd->index);
 
 }
 
@@ -368,11 +368,14 @@ void print_ntd(struct ntd_info *ntd)
 *Return       :
 *Note         :
 *****************************************************************************/
-static struct ntd_part *allocate_partition(struct amlnand_phydev* master)
+static struct ntd_info *allocate_partition(struct amlnand_phydev* master)
 {
 	struct ntd_info *slave;
 	char *name;
 
+    uint32_t block = 0;
+	
+    uint32_t block_num = 0;
 	/* allocate the partition structure */
 	slave = kzalloc(sizeof(*slave), GFP_KERNEL);
 	//name = kstrdup(part->name, GFP_KERNEL);
@@ -393,7 +396,7 @@ static struct ntd_part *allocate_partition(struct amlnand_phydev* master)
 	slave->blocksize_shift = ffs(slave->blocksize) - 1;
 	slave->pagesize_shift = ffs(slave->pagesize) - 1;
 
-	slave->parts = master->partitions;
+	slave->parts = (struct ntd_partition *)master->partitions;
 	slave->nr_partitions = master->nr_partitions;
 
 //	slave->owner = master->owner;
@@ -434,8 +437,7 @@ static struct ntd_part *allocate_partition(struct amlnand_phydev* master)
 
 	//print_ntd(slave);
 
-    uint32_t block = 0;
-    uint32_t block_num = (uint32_t)(slave->size >> slave->blocksize_shift);
+    block_num = (uint32_t)(slave->size >> slave->blocksize_shift);
     printk("block_num %d \n",block_num);
     do{
         if (slave->block_isbad(slave,block)){
@@ -445,7 +447,7 @@ static struct ntd_part *allocate_partition(struct amlnand_phydev* master)
         block_num--;
     }while(block_num != 0);
 
-out_register:
+//out_register:
 	return slave;
 }
 
