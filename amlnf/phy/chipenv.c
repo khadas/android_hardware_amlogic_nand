@@ -365,11 +365,16 @@ int repair_reserved_bad_block(struct amlnand_chip *aml_chip)
 		ret =  -1;
 		return ret;
 	}
+	
 	memset(dat_buf, 0, flash->pagesize);
 	oob_buf  = aml_nand_malloc(flash->oobsize);
 	if(!oob_buf){
+	    
 		aml_nand_msg("amlnand_free_block_test : malloc failed");
 		ret =  -1;
+        if(dat_buf)
+            kfree(dat_buf);
+            
 		return ret;
 	}
 	memset(oob_buf, 0, flash->oobsize);
@@ -473,6 +478,13 @@ write_read_fail:
         #endif
         amlnand_update_bbt(aml_chip);
     }
+    
+    if(dat_buf)
+        kfree(dat_buf);
+        
+    if(oob_buf)
+        kfree(oob_buf);
+        
     return total_blk;
 }
 /*****************************************************************************
