@@ -42,6 +42,8 @@
 
 //extern struct mutex ntd_table_mutex;
 //EXPORT_SYMBOL(ntd_table_mutex);
+extern void print_block_invalid_list(struct aml_nftl_part_t* part);
+extern int print_discard_page_map(struct aml_nftl_part_t *part);
 extern int check_storage_device(void);
 extern int is_phydev_off_adjust(void);
 extern int aml_nftl_initialize(struct aml_nftl_dev *nftl_dev,int no);
@@ -300,6 +302,16 @@ static int do_nftltrans_request(struct ntd_blktrans_ops *tr,struct ntd_blktrans_
 
  ///   if (blk_discard_rq(req))
        // return tr->discard(dev, block, nblk);
+	
+	if (req->cmd_flags & REQ_DISCARD){
+        mutex_lock(nftl_blk->nftl_dev->aml_nftl_lock);
+		//printk("%s discard block:%d, nblk:%d nftl_blk->name:%s\n", __func__, block, nblk, nftl_blk->name);
+		nftl_blk->discard_data(nftl_blk, block, nblk);
+	    mutex_unlock(nftl_blk->nftl_dev->aml_nftl_lock);
+
+		return 0;
+	}
+	
 
     nftl_blk->bounce_sg_len = blk_rq_map_sg(nftl_blk->queue, nftl_blk->req, nftl_blk->bounce_sg);
     segments = aml_nftl_calculate_sg(nftl_blk, buflen, buf_addr, offset_addr);
@@ -425,6 +437,11 @@ static int aml_nftl_reboot_notifier(struct notifier_block *nb, unsigned long pri
 
     mutex_lock(nftl_dev->aml_nftl_lock);
     error = nftl_dev->flush_write_cache(nftl_dev);
+
+    error |= nftl_dev->flush_discard_cache(nftl_dev);
+    //print_block_invalid_list(nftl_dev->aml_nftl_part);
+    //print_discard_page_map(nftl_dev->aml_nftl_part);
+
     mutex_unlock(nftl_dev->aml_nftl_lock);
 
     if(nftl_dev->nftl_thread!=NULL){

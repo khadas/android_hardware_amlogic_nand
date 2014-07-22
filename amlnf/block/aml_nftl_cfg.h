@@ -18,7 +18,7 @@
 #define MIN_FREE_BLOCK_NUM                        6
 #define GC_THRESHOLD_FREE_BLOCK_NUM               4
 
-#define MIN_FREE_BLOCK                            2
+#define MIN_FREE_BLOCK                            5
 
 #define GC_THRESHOLD_RATIO_NUMERATOR              2
 #define GC_THRESHOLD_RATIO_DENOMINATOR            3

@@ -53,7 +53,9 @@ struct aml_nftl_dev{
     int                   init_flag;
 	uint32 (*read_data)(struct aml_nftl_dev *nftl_dev, unsigned long block, unsigned nblk, unsigned char *buf);
 	uint32 (*write_data)(struct aml_nftl_dev *nftl_dev, unsigned long block, unsigned nblk, unsigned char *buf);
+    uint32 (*discard_data)(struct aml_nftl_dev *nftl_dev, unsigned long block, unsigned nblk);
 	uint32 (*flush_write_cache)(struct aml_nftl_dev *nftl_dev);
+    uint32 (*flush_discard_cache)(struct aml_nftl_dev *nftl_dev);
 
 };
 
@@ -73,6 +75,7 @@ struct aml_nftl_blk{
 
 	uint32 (*read_data)(struct aml_nftl_blk *nftl_blk, unsigned long block, unsigned nblk, unsigned char *buf);
 	uint32 (*write_data)(struct aml_nftl_blk *nftl_blk, unsigned long block, unsigned nblk, unsigned char *buf);
+    uint32 (*discard_data)(struct aml_nftl_blk *nftl_blk, unsigned long block, unsigned nblk);
 	uint32 (*flush_write_cache)(struct aml_nftl_blk *nftl_blk);
 };
 

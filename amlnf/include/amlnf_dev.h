@@ -399,6 +399,7 @@ extern int logicdev_bg_handle(void *priv);
 //
 extern ssize_t show_part_struct(struct class *class,struct class_attribute *attr,char *buf);
 extern ssize_t show_list(struct class *class, struct class_attribute *attr, const char *buf);
+extern ssize_t discard_page(struct class *class, struct class_attribute *attr, const char *buf);
 extern ssize_t do_gc_all(struct class *class, struct class_attribute *attr, const char *buf);
 extern ssize_t do_gc_one(struct class *class, struct class_attribute *attr, const char *buf);
 extern ssize_t do_test(struct class *class, struct class_attribute *attr,	const char *buf, size_t count);

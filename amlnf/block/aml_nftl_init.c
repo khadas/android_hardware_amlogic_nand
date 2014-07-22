@@ -10,6 +10,7 @@
 //#include <linux/mtd/blktrans.h>
 
 #include "aml_nftl_block.h"
+extern int print_discard_page_map(struct aml_nftl_part_t *part);
 extern int is_phydev_off_adjust(void);
 extern int amlnf_class_register(struct class* cls);
 extern void amlnf_ktime_get_ts(struct timespec *ts);
@@ -28,17 +29,23 @@ extern int cache_exit(struct aml_nftl_part_t *part);
 extern uint32 get_vaild_blocks(struct aml_nftl_part_t * part,uint32 start_block,uint32 blocks);
 extern uint32 __nand_read(struct aml_nftl_part_t* part,uint32 start_sector,uint32 len,unsigned char *buf);
 extern uint32 __nand_write(struct aml_nftl_part_t* part,uint32 start_sector,uint32 len,unsigned char *buf,int sync_flag);
+extern uint32 __nand_discard(struct aml_nftl_part_t* part,uint32 start_sector,uint32 len,int sync_flag);
 extern uint32 __nand_flush_write_cache(struct aml_nftl_part_t* part);
+extern uint32 __nand_flush_discard_cache(struct aml_nftl_part_t* part);
 extern void print_free_list(struct aml_nftl_part_t* part);
 extern void print_block_invalid_list(struct aml_nftl_part_t* part);
+extern int nand_discard_logic_page(struct aml_nftl_part_t* part,uint32 page_no);
 extern  int get_adjust_block_num(void);
 extern int aml_nftl_erase_part(struct aml_nftl_part_t *part);
 extern int aml_nftl_set_status(struct aml_nftl_part_t *part,unsigned char status);
 uint32 _nand_read(struct aml_nftl_dev *nftl_dev,unsigned long start_sector,unsigned len,unsigned char *buf);
 uint32 _nand_write(struct aml_nftl_dev *nftl_dev,unsigned long  start_sector,unsigned len,unsigned char *buf);
+uint32 _nand_discard(struct aml_nftl_dev *nftl_dev,uint32 start_sector,uint32 len);
 uint32 _nand_flush_write_cache(struct aml_nftl_dev *nftl_dev);
+uint32 _nand_flush_discard_cache(struct aml_nftl_dev *nftl_dev);
 uint32 _blk_nand_flush_write_cache(struct aml_nftl_blk *nftl_blk);
 uint32 _blk_nand_write(struct aml_nftl_blk *nftl_blk,unsigned long start_sector,unsigned  len,unsigned char *buf);
+uint32 _blk_nand_discard(struct aml_nftl_blk *nftl_blk,uint32 start_sector,uint32 len);
 uint32 _blk_nand_read(struct aml_nftl_blk *nftl_blk,unsigned long start_sector,unsigned len,unsigned char *buf);
 
 void *aml_nftl_malloc(uint32 size);
@@ -47,6 +54,7 @@ void aml_nftl_free(const void *ptr);
 
 static ssize_t show_part_struct(struct class *class,struct class_attribute *attr, char *buf);
 static ssize_t show_list(struct class *class, struct class_attribute *attr,  char *buf);
+static ssize_t discard_page(struct class *class, struct class_attribute *attr, const char *buf);
 static ssize_t do_gc_all(struct class *class, struct class_attribute *attr,	const char *buf, size_t count);
 static ssize_t do_gc_one(struct class *class, struct class_attribute *attr,	const char *buf, size_t count);
 static ssize_t do_test(struct class *class, struct class_attribute *attr,	const char *buf, size_t count);
@@ -55,6 +63,7 @@ static struct class_attribute nftl_class_attrs[] = {
 //    __ATTR(part_struct,  S_IRUGO | S_IWUSR, show_logic_block_table,    show_address_map_table),
     __ATTR(part,  S_IRUGO , show_part_struct,    NULL),
     __ATTR(list,  S_IRUGO , show_list,    NULL),
+    __ATTR(discard,  S_IRUGO | S_IWUSR , NULL,    discard_page),
     __ATTR(gcall,  S_IRUGO , NULL,    do_gc_all),
     __ATTR(gcone,  S_IRUGO , NULL,    do_gc_one),
     __ATTR(test,  S_IRUGO | S_IWUSR , NULL,    do_test),
@@ -143,7 +152,9 @@ int aml_nftl_initialize(struct aml_nftl_dev *nftl_dev,int no)
 	nftl_dev->size = aml_nftl_get_part_cap(nftl_dev->aml_nftl_part);
 	nftl_dev->read_data = _nand_read;
 	nftl_dev->write_data = _nand_write;
+    nftl_dev->discard_data = _nand_discard;
 	nftl_dev->flush_write_cache = _nand_flush_write_cache;
+    nftl_dev->flush_discard_cache = _nand_flush_discard_cache;
 
 	if(no < 0){
 		return ret; // for erase init FTL part
@@ -210,6 +221,7 @@ int aml_blktrans_initialize(struct aml_nftl_blk *nftl_blk,struct aml_nftl_dev *n
 
 	nftl_blk->read_data = _blk_nand_read;
 	nftl_blk->write_data = _blk_nand_write;
+    nftl_blk->discard_data =_blk_nand_discard;
 	nftl_blk->flush_write_cache = _blk_nand_flush_write_cache;
 
 	//printk("aml_blktrans_initialize 0x%llx \n",nftl_blk->size);
@@ -254,11 +266,31 @@ uint32 _nand_write(struct aml_nftl_dev *nftl_dev,unsigned long start_sector,unsi
     amlnf_ktime_get_ts(&nftl_dev->ts_write_start);
     return ret;
 }
+uint32 _nand_discard(struct aml_nftl_dev *nftl_dev,uint32 start_sector,uint32 len)
+{
+    uint32 ret;
+	#if 0
+    if(memcmp(nftl_dev->ntd->name, "nfdata", 6) != 0)
+    {
+        return 0;
+    }
+	#endif
+    ret = __nand_discard(nftl_dev->aml_nftl_part,start_sector,len,nftl_dev->sync_flag);
+    amlnf_ktime_get_ts(&nftl_dev->ts_write_start);
+    return ret;
+}
 
 uint32 _blk_nand_write(struct aml_nftl_blk *nftl_blk,unsigned long start_sector,unsigned  len,unsigned char *buf)
 {
     uint32 ret;
     ret = _nand_write(nftl_blk->nftl_dev,start_sector + nftl_blk->offset,len,buf);
+
+    return ret;
+}
+uint32 _blk_nand_discard(struct aml_nftl_blk *nftl_blk,uint32 start_sector,uint32 len)
+{
+    uint32 ret;
+    ret = _nand_discard(nftl_blk->nftl_dev,start_sector + nftl_blk->offset,len);
 
     return ret;
 }
@@ -272,6 +304,10 @@ uint32 _blk_nand_write(struct aml_nftl_blk *nftl_blk,unsigned long start_sector,
 uint32 _nand_flush_write_cache(struct aml_nftl_dev *nftl_dev)
 {
     return __nand_flush_write_cache(nftl_dev->aml_nftl_part);
+}
+uint32 _nand_flush_discard_cache(struct aml_nftl_dev *nftl_dev)
+{
+    return __nand_flush_discard_cache(nftl_dev->aml_nftl_part);
 }
 
 uint32 _blk_nand_flush_write_cache(struct aml_nftl_blk *nftl_blk)
@@ -317,7 +353,14 @@ static ssize_t show_list(struct class *class, struct class_attribute *attr,  cha
 
     return 0;
 }
-
+static ssize_t discard_page(struct class *class, struct class_attribute *attr, const char *buf)
+{
+    struct aml_nftl_dev *nftl_dev = container_of(class, struct aml_nftl_dev, debug);
+    PRINT("1111\n");
+    print_discard_page_map(nftl_dev->aml_nftl_part);
+    PRINT("2222\n");
+    return 0;
+}
 /*****************************************************************************
 *Name         :
 *Description  :

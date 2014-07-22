@@ -62,8 +62,15 @@ typedef short            	  sint16;
 typedef struct{
     uint16  Page_NO;
     uint16  blkNO_in_chip;
-    uchar   page_status;
+    uchar   page_status; //unmapp: page_status=0xff  valid mapping: page_status=1 discard: page_status=0
 }_nand_page;
+
+//nand discard page
+typedef struct{
+    uint32  timestamp;
+    uchar   page_status;//unmapp: page_status=0xff  valid mapping: page_status=1 discard: page_status=0
+}_nand_discard_page;
+
 
 //从物理的角度看到的接口
 typedef struct{
