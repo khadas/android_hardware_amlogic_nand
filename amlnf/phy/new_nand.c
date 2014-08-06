@@ -714,7 +714,7 @@ static int set_reg_value_toshiba(struct hw_controller *controller,  unsigned cha
 	//if(flash->new_type != TOSHIBA_2XNM)
 	//	return NAND_SUCCESS;
 
-	aml_nand_dbg("flash->new_type:%d", flash->new_type);
+	//aml_nand_dbg("flash->new_type:%d", flash->new_type);
 
 	ret = controller->quene_rb(controller, chipnr);
 	if(ret){
@@ -766,7 +766,7 @@ static int readretry_handle_toshiba(struct hw_controller *controller, unsigned c
 	
 	cur_cnt = retry_info->cur_cnt_lp[chipnr];
 
-	aml_nand_dbg("flash->new_type:%d, cur_cnt:%d", flash->new_type, cur_cnt);
+	//aml_nand_dbg("flash->new_type:%d, cur_cnt:%d", flash->new_type, cur_cnt);
 
 	ret = set_reg_value_toshiba(controller, &retry_info->reg_offs_val_lp[0][cur_cnt][0],
 								&retry_info->reg_addr_lp[0], chipnr, retry_info->reg_cnt_lp);
@@ -1152,7 +1152,7 @@ static int set_reg_value_sandisk(struct hw_controller *controller,  unsigned cha
 	//if(flash->new_type != SANDISK_19NM)
 	//	return NAND_SUCCESS;
 
-	aml_nand_dbg("flash->new_type:%d", flash->new_type);
+	//aml_nand_dbg("flash->new_type:%d", flash->new_type);
 
 	ret = controller->quene_rb(controller, chipnr);
 	if(ret){
@@ -1195,7 +1195,7 @@ static int set_a19_reg_value_sandisk(struct hw_controller *controller,  unsigned
 	//struct nand_flash *flash = &(aml_chip->flash);	
 	//struct read_retry_info *retry_info =  &(controller->retry_info);
 	int i, ret = 0;
-	aml_nand_dbg("flash->new_type:%d", flash->new_type);
+	//aml_nand_dbg("flash->new_type:%d", flash->new_type);
 	ret = controller->quene_rb(controller, chipnr);
 	if(ret){
 		aml_nand_msg("quene rb failed chipnr:%d", chipnr);
