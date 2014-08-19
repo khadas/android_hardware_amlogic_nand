@@ -51,6 +51,7 @@ struct aml_nftl_dev{
 	struct _nftl_cfg        nftl_cfg;
 	int 				  sync_flag;
     int                   init_flag;
+    int                   reboot_flag;
 	uint32 (*read_data)(struct aml_nftl_dev *nftl_dev, unsigned long block, unsigned nblk, unsigned char *buf);
 	uint32 (*write_data)(struct aml_nftl_dev *nftl_dev, unsigned long block, unsigned nblk, unsigned char *buf);
     uint32 (*discard_data)(struct aml_nftl_dev *nftl_dev, unsigned long block, unsigned nblk);

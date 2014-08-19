@@ -302,7 +302,15 @@ static int do_nftltrans_request(struct ntd_blktrans_ops *tr,struct ntd_blktrans_
 
  ///   if (blk_discard_rq(req))
        // return tr->discard(dev, block, nblk);
-	
+
+
+    //just return since notifier only need once
+    if(nftl_blk->nftl_dev->reboot_flag){
+        PRINT("Just ignore nand req here after reboot nb block:%d nblk:%d, cmd_flags:0x%x nftl_blk:%s\n", 
+                    block, nblk, req->cmd_flags, nftl_blk->name);
+        return 0;
+    }
+    	
 	if (req->cmd_flags & REQ_DISCARD){
         mutex_lock(nftl_blk->nftl_dev->aml_nftl_lock);
 		//printk("%s discard block:%d, nblk:%d nftl_blk->name:%s\n", __func__, block, nblk, nftl_blk->name);
@@ -435,6 +443,12 @@ static int aml_nftl_reboot_notifier(struct notifier_block *nb, unsigned long pri
     int error = 0;
     struct aml_nftl_dev *nftl_dev = nftl_notifier_to_dev(nb);
 
+    //just return since notifier only need once
+    if(nftl_dev->reboot_flag){
+        printk("nand reboot notify Just ignore here for %s\n", nftl_dev->name);
+        return error;
+    }
+    
     mutex_lock(nftl_dev->aml_nftl_lock);
     error = nftl_dev->flush_write_cache(nftl_dev);
 
@@ -448,6 +462,8 @@ static int aml_nftl_reboot_notifier(struct notifier_block *nb, unsigned long pri
         kthread_stop(nftl_dev->nftl_thread); //add stop thread to ensure nftl quit safely
         nftl_dev->nftl_thread=NULL;
     }
+    
+    nftl_dev->reboot_flag = 1;
 
     return error;
 }
@@ -531,6 +547,7 @@ static void aml_nftl_add_ntd(struct ntd_blktrans_ops *tr, struct ntd_info *ntd)
         return;
     }
     nftl_dev->init_flag = 1;
+    nftl_dev->reboot_flag = 0;
     ntd->nftl_priv = (void*)nftl_dev;
 
     nftl_dev->nftl_thread = kthread_run(aml_nftl_thread, nftl_dev, "%sd", "aml_nftl");
