@@ -63,7 +63,7 @@ static struct class_attribute nftl_class_attrs[] = {
 //    __ATTR(part_struct,  S_IRUGO | S_IWUSR, show_logic_block_table,    show_address_map_table),
     __ATTR(part,  S_IRUGO , show_part_struct,    NULL),
     __ATTR(list,  S_IRUGO , show_list,    NULL),
-    __ATTR(discard,  S_IRUGO | S_IWUSR , NULL,    discard_page),
+    __ATTR(discard,  S_IRUGO , discard_page,  NULL),
     __ATTR(gcall,  S_IRUGO , NULL,    do_gc_all),
     __ATTR(gcone,  S_IRUGO , NULL,    do_gc_one),
     __ATTR(test,  S_IRUGO | S_IWUSR , NULL,    do_test),
@@ -221,7 +221,7 @@ int aml_blktrans_initialize(struct aml_nftl_blk *nftl_blk,struct aml_nftl_dev *n
 
 	nftl_blk->read_data = _blk_nand_read;
 	nftl_blk->write_data = _blk_nand_write;
-    nftl_blk->discard_data =_blk_nand_discard;
+    nftl_blk->discard_data = _blk_nand_discard;
 	nftl_blk->flush_write_cache = _blk_nand_flush_write_cache;
 
 	//printk("aml_blktrans_initialize 0x%llx \n",nftl_blk->size);
@@ -353,6 +353,7 @@ static ssize_t show_list(struct class *class, struct class_attribute *attr,  cha
 
     return 0;
 }
+
 static ssize_t discard_page(struct class *class, struct class_attribute *attr, const char *buf)
 {
     struct aml_nftl_dev *nftl_dev = container_of(class, struct aml_nftl_dev, debug);

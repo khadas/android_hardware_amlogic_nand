@@ -306,8 +306,8 @@ static int do_nftltrans_request(struct ntd_blktrans_ops *tr,struct ntd_blktrans_
 
     //just return since notifier only need once
     if(nftl_blk->nftl_dev->reboot_flag){
-        PRINT("Just ignore nand req here after reboot nb block:%d nblk:%d, cmd_flags:0x%x nftl_blk:%s\n", 
-                    block, nblk, req->cmd_flags, nftl_blk->name);
+        PRINT("Just ignore nand req here after reboot nb block:0x%lx nblk:0x%lx, cmd_flags:0x%x nftl_blk:%s\n", \
+            block, nblk, req->cmd_flags, nftl_blk->name);
         return 0;
     }
     	
@@ -445,7 +445,7 @@ static int aml_nftl_reboot_notifier(struct notifier_block *nb, unsigned long pri
 
     //just return since notifier only need once
     if(nftl_dev->reboot_flag){
-        printk("nand reboot notify Just ignore here for %s\n", nftl_dev->name);
+        PRINT("nand reboot notify Just ignore here for %s\n", nftl_dev->ntd->name);
         return error;
     }
     
