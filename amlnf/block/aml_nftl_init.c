@@ -32,6 +32,8 @@ extern uint32 __nand_write(struct aml_nftl_part_t* part,uint32 start_sector,uint
 extern uint32 __nand_discard(struct aml_nftl_part_t* part,uint32 start_sector,uint32 len,int sync_flag);
 extern uint32 __nand_flush_write_cache(struct aml_nftl_part_t* part);
 extern uint32 __nand_flush_discard_cache(struct aml_nftl_part_t* part);
+extern uint32 __check_mapping(struct aml_nftl_part_t* part,uint64_t offset,uint64_t size);
+extern uint32 __discard_partition(struct aml_nftl_part_t* part,uint64_t offset,uint64_t size);
 extern void print_free_list(struct aml_nftl_part_t* part);
 extern void print_block_invalid_list(struct aml_nftl_part_t* part);
 extern int nand_discard_logic_page(struct aml_nftl_part_t* part,uint32 page_no);
@@ -43,6 +45,8 @@ uint32 _nand_write(struct aml_nftl_dev *nftl_dev,unsigned long  start_sector,uns
 uint32 _nand_discard(struct aml_nftl_dev *nftl_dev,unsigned int start_sector,uint32 len);
 uint32 _nand_flush_write_cache(struct aml_nftl_dev *nftl_dev);
 uint32 _nand_flush_discard_cache(struct aml_nftl_dev *nftl_dev);
+uint32 _check_mapping(struct aml_nftl_dev *nftl_dev,uint64_t offset,uint64_t size);
+uint32 _discard_partition(struct aml_nftl_dev *nftl_dev,uint64_t offset,uint64_t size);
 uint32 _blk_nand_flush_write_cache(struct aml_nftl_blk *nftl_blk);
 uint32 _blk_nand_write(struct aml_nftl_blk *nftl_blk,unsigned long start_sector,unsigned  len,unsigned char *buf);
 uint32 _blk_nand_discard(struct aml_nftl_blk *nftl_blk,unsigned int start_sector,uint32 len);
@@ -155,7 +159,8 @@ int aml_nftl_initialize(struct aml_nftl_dev *nftl_dev,int no)
     nftl_dev->discard_data = _nand_discard;
 	nftl_dev->flush_write_cache = _nand_flush_write_cache;
     nftl_dev->flush_discard_cache = _nand_flush_discard_cache;
-
+    nftl_dev->check_mapping = _check_mapping;
+    nftl_dev->discard_partition = _discard_partition;
 	if(no < 0){
 		return ret; // for erase init FTL part
 	}
@@ -308,6 +313,14 @@ uint32 _nand_flush_write_cache(struct aml_nftl_dev *nftl_dev)
 uint32 _nand_flush_discard_cache(struct aml_nftl_dev *nftl_dev)
 {
     return __nand_flush_discard_cache(nftl_dev->aml_nftl_part);
+}
+uint32 _check_mapping(struct aml_nftl_dev *nftl_dev,uint64_t offset,uint64_t size)
+{
+    return __check_mapping(nftl_dev->aml_nftl_part,offset,size);
+}
+uint32 _discard_partition(struct aml_nftl_dev *nftl_dev,uint64_t offset,uint64_t size)
+{
+    return __discard_partition(nftl_dev->aml_nftl_part,offset,size);
 }
 
 uint32 _blk_nand_flush_write_cache(struct aml_nftl_blk *nftl_blk)
