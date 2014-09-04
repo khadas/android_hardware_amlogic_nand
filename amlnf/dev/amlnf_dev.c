@@ -537,13 +537,17 @@ static int get_nand_platform(struct aml_nand_device *aml_nand_dev,struct platfor
 
 #ifdef CONFIG_NAND_AML_M8
 #define POR_BOOT_VALUE 	((((R_BOOT_DEVICE_FLAG>>9)&1)<<2)|((R_BOOT_DEVICE_FLAG>>6)&3))
+//#define POR_SPI_BOOT()  		((POR_BOOT_VALUE == 5) || (POR_BOOT_VALUE == 4))
+#define POR_SPI_BOOT()	((IS_MESON_M8_CPU)?((POR_BOOT_VALUE == 5)||(POR_BOOT_VALUE == 4)) : (POR_BOOT_VALUE == 5))
+//#define POR_EMMC_BOOT()	 (POR_BOOT_VALUE == 3)
+#define POR_EMMC_BOOT()	((IS_MESON_M8_CPU)?(POR_BOOT_VALUE == 3):((POR_BOOT_VALUE == 3)||(POR_BOOT_VALUE == 1)))
 #else
 #define POR_BOOT_VALUE 	(R_BOOT_DEVICE_FLAG & 7)
+#define POR_SPI_BOOT()  		((POR_BOOT_VALUE == 5) || (POR_BOOT_VALUE == 4))
+#define POR_EMMC_BOOT()	 (POR_BOOT_VALUE == 3)
 #endif
 
 #define POR_NAND_BOOT()	 ((POR_BOOT_VALUE == 7) || (POR_BOOT_VALUE == 6))
-#define POR_SPI_BOOT()  		((POR_BOOT_VALUE == 5) || (POR_BOOT_VALUE == 4))
-#define POR_EMMC_BOOT()	 (POR_BOOT_VALUE == 3)
 #define POR_CARD_BOOT() 	(POR_BOOT_VALUE == 0)
 
 
