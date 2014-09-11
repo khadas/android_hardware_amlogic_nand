@@ -77,7 +77,7 @@ extern int aml_nftl_set_status(struct aml_nftl_part_t *part,unsigned char status
 //static struct mutex aml_nftl_lock;
 static int nftl_num;
 static int dev_num;
-
+extern int test_flag;
 
 int aml_ntd_nftl_flush(struct ntd_info *ntd);
 
@@ -195,12 +195,17 @@ static int aml_nftl_calculate_sg(struct aml_nftl_blk *nftl_blk, size_t buflen, u
 }
 
 uint32 write_sync_flag(struct aml_nftl_blk *aml_nftl_blk)
-{    
+{ 
+	struct aml_nftl_dev *nftl_dev = aml_nftl_blk->nftl_dev;
+    if(test_flag)
+    {
+        return 0;
+    }
 #if NFTL_CACHE_FLUSH_SYNC   	
 #ifdef CONFIG_SUPPORT_USB_BURNING
         return 0;
 #endif
-	struct aml_nftl_dev *nftl_dev = aml_nftl_blk->nftl_dev;
+
 
    	nftl_dev->sync_flag = 0;
 	if(memcmp(aml_nftl_blk->name, "media", 5)==0)
@@ -462,7 +467,9 @@ static int aml_nftl_reboot_notifier(struct notifier_block *nb, unsigned long pri
         kthread_stop(nftl_dev->nftl_thread); //add stop thread to ensure nftl quit safely
         nftl_dev->nftl_thread=NULL;
     }
-    
+    mutex_lock(nftl_dev->aml_nftl_lock);
+    error |= nftl_dev->write_pair_page(nftl_dev);
+    mutex_unlock(nftl_dev->aml_nftl_lock);
     nftl_dev->reboot_flag = 1;
 
     return error;

@@ -12,7 +12,8 @@
 **            
 *****************************************************************/
 #include "../include/phynand.h"
-
+int test_flag = 0;
+EXPORT_SYMBOL(test_flag);
 #ifdef AML_NAND_UBOOT
 	//extern struct amlnf_partition amlnand_config;
 	extern struct amlnf_partition * amlnand_config;
@@ -1005,6 +1006,15 @@ ssize_t show_bbt_table(struct class *class, struct class_attribute *attr, const 
 
 	return count;
 }
+ssize_t change_test_sync_flag(struct class *class, struct class_attribute *attr, const char *buf, size_t count)
+{
+    int num;
+	sscanf(buf, "%x", &num);
+    printk("---------------------------------------------test_flag=%d\n",num);
+    test_flag = num;
+	return count;
+}
+
 ssize_t show_amlnf_version_info(struct class *class, struct class_attribute *attr, char *buf)
 {
     	aml_nand_dbg("show_nand_version_info v0.01");
