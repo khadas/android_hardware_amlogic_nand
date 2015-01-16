@@ -609,7 +609,7 @@ static void aml_nftl_add_ntd(struct ntd_blktrans_ops *tr, struct ntd_info *ntd)
     nftl_dev->reboot_flag = 0;
     ntd->nftl_priv = (void*)nftl_dev;
 
-    nftl_dev->nftl_thread = kthread_run(aml_nftl_thread, nftl_dev, "%sd", "aml_nftl");
+    nftl_dev->nftl_thread = kthread_run(aml_nftl_thread, nftl_dev, "%s_%s", "aml_nftl", ntd->name);
     if (IS_ERR(nftl_dev->nftl_thread))
         return;
 
