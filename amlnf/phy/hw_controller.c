@@ -131,7 +131,7 @@ static int controller_queue_rb_irq(struct hw_controller *controller, unsigned ch
     NFC_SEND_CMD_RB_IRQ(18);   
     //NFC_SEND_CMD_IDLE(controller->chip_selected, NAND_TWB_TIME_CYCLE);    
     
-    timeout = wait_for_completion_timeout(&controller_rb_completion, 200);
+    timeout = wait_for_completion_timeout(&controller_rb_completion, 50);
     if(timeout == 0){
         aml_nand_msg("***nand irq timeout here");
 		ret = -NAND_BUSY_FAILURE;
