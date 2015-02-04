@@ -59,7 +59,7 @@ void aml_nftl_free(const void *ptr);
 //int aml_nftl_dbg(const char * fmt,args...);
 
 static ssize_t show_part_struct(struct class *class,struct class_attribute *attr, char *buf);
-static ssize_t show_list(struct class *class, struct class_attribute *attr,  char *buf);
+static ssize_t show_list(struct class *class, struct class_attribute *attr,	const char *buf, size_t count);
 //static ssize_t discard_page(struct class *class, struct class_attribute *attr, const char *buf);
 static ssize_t do_gc_all(struct class *class, struct class_attribute *attr,	const char *buf, size_t count);
 static ssize_t do_gc_one(struct class *class, struct class_attribute *attr,	const char *buf, size_t count);
@@ -68,7 +68,7 @@ static ssize_t do_test(struct class *class, struct class_attribute *attr,	const 
 static struct class_attribute nftl_class_attrs[] = {
 //    __ATTR(part_struct,  S_IRUGO | S_IWUSR, show_logic_block_table,    show_address_map_table),
     __ATTR(part,  S_IRUGO , show_part_struct,    NULL),
-    __ATTR(list,  S_IRUGO , show_list,    NULL),
+    __ATTR(list,  S_IRUGO | S_IWUSR, show_part_struct,  show_list),
 //    __ATTR(discard,  S_IRUGO | S_IWUSR , NULL,    discard_page),
     __ATTR(gcall,  S_IRUGO , NULL,    do_gc_all),
     __ATTR(gcone,  S_IRUGO , NULL,    do_gc_one),
@@ -363,10 +363,11 @@ static ssize_t show_part_struct(struct class *class,struct class_attribute *attr
 *Return       :
 *Note         :
 *****************************************************************************/
-static ssize_t show_list(struct class *class, struct class_attribute *attr,  char *buf)
+static ssize_t show_list(struct class *class, struct class_attribute *attr,	const char *buf, size_t count)
 {
     struct aml_nftl_dev *nftl_dev = container_of(class, struct aml_nftl_dev, debug);
 
+    PRINT("--------------name:%s\n",nftl_dev->ntd->name);
     print_free_list(nftl_dev -> aml_nftl_part);
     print_block_invalid_list(nftl_dev -> aml_nftl_part);
 //    print_block_count_list(nftl_dev -> aml_nftl_part);

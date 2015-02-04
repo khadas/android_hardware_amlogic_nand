@@ -12,8 +12,10 @@
 **            
 *****************************************************************/
 #include "../include/phynand.h"
+
 int test_flag = 0;
 EXPORT_SYMBOL(test_flag);
+
 #ifdef AML_NAND_UBOOT
 	//extern struct amlnf_partition amlnand_config;
 	extern struct amlnf_partition * amlnand_config;
@@ -1006,12 +1008,18 @@ ssize_t show_bbt_table(struct class *class, struct class_attribute *attr, const 
 
 	return count;
 }
-ssize_t change_test_sync_flag(struct class *class, struct class_attribute *attr, const char *buf, size_t count)
+ssize_t nand_ioctl(struct class *class, struct class_attribute *attr, const char *buf, size_t count)
 {
-    int num;
-	sscanf(buf, "%x", &num);
+    uint32_t num;
+    
+    sscanf(buf, "%x", &num);
     printk("---------------------------------------------test_flag=%d\n",num);
     test_flag = num;
+    //test_flag bit layout
+    //bit0: 0 means media don't sync, 1 means all partition don't sync
+    //bit1: 0 means close blk request print, 1 means open blk request print
+    //bit2: 0 means do nothing, 1 means check if block is already in free list before add it to free list.
+    //the rest bit is undefined now.
 	return count;
 }
 
