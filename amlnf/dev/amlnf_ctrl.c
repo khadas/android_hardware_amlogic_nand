@@ -427,6 +427,7 @@ void get_sys_clk_rate(int * rate)
 	#ifndef AML_NAND_UBOOT
 		sys_clk = clk_get_sys(NAND_SYS_CLK_NAME, NULL);
 		*rate = clk_get_rate(sys_clk);
+		*rate = *rate/1000000;
 	#else
 		*rate = get_clk81();
 	#endif
