@@ -10,8 +10,8 @@
 #endif
 //#define CONFIG_OF
 
-#define NAND_COMPATIBLE_REGION     1
-#define NAND_RESERVED_REGION	       1
+#define NAND_COMPATIBLE_REGION     2
+#define NAND_RESERVED_REGION	   1
 #define NAND_ADDNEW_REGION	       1
 #define NAND_BUG_FIX_REGION	       6
 
@@ -117,6 +117,7 @@ typedef union nand_core_clk {
 #define 	KEY_INFO_HEAD_MAGIC				"nkey"
 #define 	SECURE_INFO_HEAD_MAGIC 			"nsec"
 #define 	ENV_INFO_HEAD_MAGIC 			"nenv"
+#define 	PHY_PARTITION_HEAD_MAGIC 		"phyp"
 
 #define 	FBBT_COPY_NUM  						1
 
@@ -645,6 +646,12 @@ struct dev_para{
 
 	unsigned option;
 };
+struct _phy_partition{
+	const char name[MAX_DEVICE_NAME_LEN];
+	uint64_t phy_off;    
+	uint64_t phy_len;
+    uint64_t logic_len;
+};
 
 #define MAX_PART_NUM	16
 #define PART_NAME_LEN 16
@@ -661,6 +668,11 @@ struct nand_config{
 	unsigned int driver_version;
 	unsigned char dev_num;
 	unsigned short fbbt_blk_addr;
+};
+struct phy_partition_info{
+	unsigned int crc;
+	struct _phy_partition partition[MAX_DEVICE_NUM];	
+	unsigned char dev_num;
 };
 
 struct nand_bbt {
@@ -726,7 +738,8 @@ struct amlnand_chip {
 	
 	nand_arg_info 	config_msg;
 	struct nand_config * config_ptr;
-
+    struct phy_partition_info* phy_part_ptr;
+    
 	nand_arg_info    nand_bbtinfo;	
 	 nand_arg_info  shipped_bbtinfo;	
 	struct shipped_bbt  * shipped_bbt_ptr;
@@ -734,6 +747,7 @@ struct amlnand_chip {
 	 nand_arg_info  nand_key;
 	nand_arg_info  nand_secure;
 	nand_arg_info  uboot_env;
+    nand_arg_info  nand_phy_partition;
 #ifndef AML_NAND_UBOOT	
 	struct pinctrl *nand_pinctrl;
 	struct pinctrl_state *nand_pinstate;
@@ -779,6 +793,7 @@ extern void nand_boot_info_prepare(struct amlnand_phydev *phydev, unsigned char 
 extern void uboot_set_ran_mode(struct amlnand_phydev *phydev);
 extern void get_sys_clk_rate(int * rate);
 extern int aml_ubootenv_init(struct amlnand_chip *aml_chip);
+unsigned int aml_info_checksum(unsigned char *data,int lenth);
 
 #ifndef AML_NAND_UBOOT
 extern  void   nand_get_chip(void *aml_chip);

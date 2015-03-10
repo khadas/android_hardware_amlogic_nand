@@ -64,9 +64,11 @@ int  phrase_driver_version(unsigned int cp, unsigned int cmp)
 {
 	int ret=0;
 
-	if(cp != cmp){	
+	if((((cp >> 24)&0xff) != ((cmp >> 24)&0xff)) || (((cp >> 16)&0xff) != ((cmp >> 16)&0xff)) \
+        || (((cp >> 8)&0xff) != ((cmp >> 8)&0xff)) || ((cp&0xff) != (cmp&0xff))){
 		ret = -1;
 	}
+
 	return ret;
 }
 
@@ -83,7 +85,7 @@ void reset_amlchip_member(struct amlnand_chip *aml_chip)
 
 #endif
 
-static unsigned int aml_info_checksum(unsigned char *data,int lenth)
+unsigned int aml_info_checksum(unsigned char *data,int lenth)
 {
 	unsigned int checksum;
 	 unsigned char *pdata;
@@ -126,7 +128,14 @@ static int aml_info_check_datasum(void *data,unsigned char *name)
 				ret = -NAND_READ_FAILED;
 			}
 		}
-	
+	if(!memcmp(name,PHY_PARTITION_HEAD_MAGIC,4)){
+			struct phy_partition_info * phy_part = (struct phy_partition_info *)data;
+			crc = phy_part->crc;
+			if(aml_info_checksum((unsigned char *)(phy_part->partition),(MAX_DEVICE_NUM*sizeof(struct _phy_partition))) != crc){
+				aml_nand_msg("aml_info_check_datasum : nand check phy partition crc error");
+				ret = -NAND_READ_FAILED;
+			}
+		}
 	return ret;
 }
 
@@ -1998,9 +2007,9 @@ int amlnand_configs_confirm(struct amlnand_chip *aml_chip)
 
 	ret = phrase_driver_version(((config_ptr->driver_version >> 24)&0xff),((DRV_PHY_VERSION >> 24)&0xff));
 	if(ret){
-		aml_nand_msg("nand driver version confirm failed :  driver_version in nand  %d.%02d.%03d.%04d ",(config_ptr->driver_version >> 24)&0xff,
+		aml_nand_msg("driver_version in nand  %d.%02d.%03d.%04d ",(config_ptr->driver_version >> 24)&0xff,
 		(config_ptr->driver_version >> 16)&0xff,(config_ptr->driver_version >> 8)&0xff,(config_ptr->driver_version)&0xff);
-		confirm_flag = 1;
+		//confirm_flag = 1;
 	}
 
 		
@@ -2665,6 +2674,14 @@ static int amlnand_config_buf_malloc(struct amlnand_chip *aml_chip)
 		goto exit_error0;
 	}
 	memset(aml_chip->config_ptr, 0x0, (sizeof(struct nand_config)));
+    
+	aml_chip->phy_part_ptr = aml_nand_malloc(sizeof(struct phy_partition_info));
+	if(aml_chip->phy_part_ptr == NULL){
+		aml_nand_msg("malloc failed for phy_part_ptr ");
+		ret = -NAND_MALLOC_FAILURE;
+		goto exit_error0;
+	}
+	memset(aml_chip->phy_part_ptr, 0x0, (sizeof(struct phy_partition_info)));
 
 	return ret;
 	
@@ -2681,6 +2698,10 @@ exit_error0:
 			kfree(aml_chip->config_ptr);
 			aml_chip->config_ptr = NULL;
 		}
+        if (aml_chip->phy_part_ptr) {
+    		kfree(aml_chip->phy_part_ptr);
+    		aml_chip->phy_part_ptr = NULL;
+    	}
 		if (aml_chip->user_oob_buf) {
 			kfree(aml_chip->user_oob_buf);
 			aml_chip->user_oob_buf = NULL;
@@ -2700,6 +2721,7 @@ void amlnand_set_config_attribute(struct amlnand_chip *aml_chip)
 	aml_chip->nand_secure.arg_type = FULL_PAGE;
 	aml_chip->nand_key.arg_type = FULL_PAGE;  
 	aml_chip->uboot_env.arg_type = FULL_PAGE;  
+    aml_chip->nand_phy_partition.arg_type = FULL_PAGE;
 
 	return;
 }
@@ -2910,7 +2932,12 @@ int amlnand_get_dev_configs(struct amlnand_chip *aml_chip)
 		}
 #endif
 	}
-	
+
+        //scan phy partition info here, if we can't find phy partition, we will calc and save it in phydev init stage.
+		ret = amlnand_info_init(aml_chip, (unsigned char *)&(aml_chip->nand_phy_partition),(unsigned char *)aml_chip->phy_part_ptr,PHY_PARTITION_HEAD_MAGIC, sizeof(struct phy_partition_info));
+		if(ret < 0){
+			aml_nand_msg("nand scan phy partition info failed and ret:%d, will calc and save in in phydev init stage.",ret);	
+		}
 		ret = aml_sys_info_init(aml_chip); //key  and stoarge
 		if(ret < 0){
 			aml_nand_msg("nand init sys_info failed and ret:%d", ret);					
@@ -2959,6 +2986,10 @@ exit_error0:
 	if (aml_chip->config_ptr) {
 		kfree(aml_chip->config_ptr);
 		aml_chip->config_ptr = NULL;
+	}
+    if (aml_chip->phy_part_ptr) {
+		kfree(aml_chip->phy_part_ptr);
+		aml_chip->phy_part_ptr = NULL;
 	}
 	if (aml_chip->user_oob_buf) {
 		kfree(aml_chip->user_oob_buf);
