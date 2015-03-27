@@ -1103,7 +1103,10 @@ int aml_alloc_phydev(struct amlnand_phydev **phydev_pp, struct amlnand_chip *aml
     phydev_p->block_modifybbt = block_modifybbt;
     phydev_p->update_bbt = update_bbt;
     phydev_p->phydev_test_block = nand_test_block;
-
+#ifndef AML_NAND_UBOOT
+    	phydev_p->suspend = phydev_suspend;
+    	phydev_p->resume = phydev_resume;
+#endif
     return ret;
 
 }
