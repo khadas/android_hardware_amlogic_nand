@@ -336,7 +336,7 @@ typedef union nand_core_clk {
 #define 	RETRY_NAND_COPY_NUM					4
 
 #define	READ_RETRY_REG_NUM   					8
-#define	READ_RETRY_CNT   						30
+#define	READ_RETRY_CNT   						40
 
 #define	EN_SLC_REG_NUM   						8
 
@@ -366,6 +366,10 @@ typedef union nand_core_clk {
 #define	NAND_CMD_SANDISK_DSP_OFF					0x25
 #define	NAND_CMD_SANDISK_DSP_ON						0x26
 #define	NAND_CMD_SANDISK_RETRY_STA					 0x5D
+#define	NAND_CMD_SANDISK_TEST_MODE1					0x5c
+#define	NAND_CMD_SANDISK_TEST_MODE2					0xc5
+#define	NAND_CMD_SANDISK_TEST_MODE_ACCESS			0x55
+
 //for hynix 20nm OTP
 #define 	HYNIX_OTP_COPY							8
 #define 	HYNIX_OTP_LEN							528
@@ -375,7 +379,7 @@ typedef union nand_core_clk {
 #define	HYNIX_26NM_8GB 							2		//H27UBG8T2BTR
 #define	HYNIX_20NM_4GB 							3		//
 #define	HYNIX_20NM_8GB 							4		//
-#define	HYNIX_1YNM_8GB 							6
+#define	HYNIX_1YNM 								6
 //for Toshiba
 #define	TOSHIBA_2XNM 							20		//TC58NVG5D2HTA00
 #define	TOSHIBA_A19NM 							21																//TC58NVG6D2GTA00
@@ -407,6 +411,7 @@ struct read_retry_info
 	unsigned char	retry_cnt_lp;
 	unsigned char	retry_cnt_up;
 	unsigned char	retry_cnt_tp;
+    unsigned char	retry_stage;
 	
 	unsigned char	cur_cnt_lp[MAX_CHIP_NUM];	
 	unsigned char	cur_cnt_up[MAX_CHIP_NUM];

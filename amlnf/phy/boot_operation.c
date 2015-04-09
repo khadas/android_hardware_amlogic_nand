@@ -351,7 +351,7 @@ static int write_uboot(struct amlnand_phydev *phydev)
 					ops_para->page_addr = (ops_para->page_addr & (~(pages_per_blk -1))) |((ops_para->page_addr % pages_per_blk) << 1);
 			}
 #if 1
-			if(flash->new_type ==HYNIX_1YNM_8GB) {
+			if(flash->new_type ==HYNIX_1YNM) {
 				if((ops_tem % 256)>1) {
 					priv_lsb =  (ops_tem & (~(pages_per_blk -1))) |(slc_info->pagelist[(ops_tem % 256)-1]);
 				ops_tem = ops_para->page_addr ;

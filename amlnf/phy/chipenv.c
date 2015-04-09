@@ -856,7 +856,7 @@ get_free_blk:
 		for(i=0; i<pages_read;){
 					if((pages_read -i) < arg_pages){
 						
-						if(flash->new_type == HYNIX_1YNM_8GB) {
+						if(flash->new_type == HYNIX_1YNM) {
 							aml_nand_msg("starting write dummy random data......");
 							if(i < pages_read) {
 								/*for slc mode, if not full block write, need write dummy random data to lock data*/
@@ -988,7 +988,7 @@ get_free_blk:
 						goto get_free_blk;
 					}
 					/*for slc mode*/
-					if(flash->new_type == HYNIX_1YNM_8GB) {
+					if(flash->new_type == HYNIX_1YNM) {
 						temp_page_num = offset_tmp + i;
 						//if((temp_page_num == 1)||((temp_page_num>1)&&((temp_page_num%2) ==0))) {
 						if(temp_page_num >= 1) {
@@ -1054,7 +1054,7 @@ get_free_blk:
 			
 			
 			/*for slc mode*/
-			if(flash->new_type == HYNIX_1YNM_8GB){
+			if(flash->new_type == HYNIX_1YNM){
 					if(arg_info->arg_valid && (!full_page_flag)&&(!arg_info->update_flag))
 						ops_para->page_addr +=1;
 					temp_page_num = ops_para->page_addr % 256;		
@@ -1112,7 +1112,7 @@ get_free_blk:
 			}
 			
 			/*for slc mode*/
-			if(flash->new_type == HYNIX_1YNM_8GB) {
+			if(flash->new_type == HYNIX_1YNM) {
 				//if((temp_page_num == 1)||((temp_page_num>1)&&((temp_page_num%2) ==0))) {
 				if(temp_page_num >= 1) {
 					
@@ -1154,7 +1154,7 @@ get_free_blk:
 			offset_tmp += 1;
 			amount_saved += flash->pagesize;
 			
-			if(flash->new_type == HYNIX_1YNM_8GB) {
+			if(flash->new_type == HYNIX_1YNM) {
 				if(amount_saved >= size+extra_page*flash->pagesize) {
 					/*for slc mode, if not full block write, need write dummy random data to lock data*/
 					//write dummy page
@@ -1256,7 +1256,7 @@ get_free_blk:
 				arg_info->valid_page_addr  = 0;
 			else{	
 				arg_info->valid_page_addr += arg_pages;
-				if(flash->new_type == HYNIX_1YNM_8GB)
+				if(flash->new_type == HYNIX_1YNM)
 					arg_info->valid_page_addr += 1;
 			}
 		}else if((arg_info->arg_type == FULL_BLK) && (arg_info->arg_valid)){
@@ -1670,7 +1670,7 @@ int amlnand_check_info_by_name(struct amlnand_chip *aml_chip,unsigned char * inf
 					}
 					i +=(size >> phys_page_shift) + 1;
 					/*for hynix slc mode*/
-					if(flash->new_type == HYNIX_1YNM_8GB)
+					if(flash->new_type == HYNIX_1YNM)
 						i +=1;
 				}
 				
@@ -2157,7 +2157,7 @@ get_free_blk:
 		ops_para->oob_buf = aml_chip->user_oob_buf;
 		ops_para->ooblen = sizeof(oob_buf);
 
-		if(flash->new_type == HYNIX_1YNM_8GB) {
+		if(flash->new_type == HYNIX_1YNM) {
 			if((i>1)&&((i%2) ==0)) {
 				tmp_addr =	ops_para->page_addr;
 				tmp_rand = controller->ran_mode;
@@ -2364,7 +2364,7 @@ int aml_nand_scan_hynix_info(struct amlnand_chip *aml_chip)
 						aml_nand_dbg(" REG(0x%x):	value:0x%x, for chip[%d]",retry_info->reg_addr_lp[j], retry_info->reg_def_val[k][j], k);					
 				}
 				
-				if((flash->new_type == HYNIX_20NM_8GB) || (flash->new_type == HYNIX_20NM_4GB)|| (flash->new_type == HYNIX_1YNM_8GB)){
+				if((flash->new_type == HYNIX_20NM_8GB) || (flash->new_type == HYNIX_20NM_4GB)|| (flash->new_type == HYNIX_1YNM)){
 					//memcpy(&retry_info->reg_offs_val_lp[0][0][0], (unsigned char *)(aml_chip->user_page_buf+MAX_CHIP_NUM*READ_RETRY_REG_NUM), 		
 					//						MAX_CHIP_NUM*READ_RETRY_CNT*READ_RETRY_REG_NUM);
 

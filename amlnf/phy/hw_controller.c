@@ -148,7 +148,7 @@ static int controller_quene_rb(struct hw_controller *controller, unsigned char c
 {
 	unsigned time_out_limit, time_out_cnt = 0;
 	struct amlnand_chip *aml_chip = controller->aml_chip;
-	int ret = 0;
+	int ret = 0,status = 0;
 
 	if(aml_chip->state == CHIP_RESETING){
 		time_out_limit = AML_NAND_ERASE_BUSY_TIMEOUT;
@@ -189,7 +189,8 @@ static int controller_quene_rb(struct hw_controller *controller, unsigned char c
 		
 	   	do{
     			//udelay(chip->chip_delay);
-	    		if ((int)controller->readbyte(controller) & NAND_STATUS_READY)
+				status = (int)controller->readbyte(controller);
+	    		if (status & NAND_STATUS_READY)
 	    			break;
 	    		udelay(1);
     		}while(time_out_cnt++ <= time_out_limit);   //200ms max
@@ -204,9 +205,11 @@ static int controller_quene_rb(struct hw_controller *controller, unsigned char c
 
 	}
 
-	if(time_out_cnt >=  time_out_limit)
+	if(time_out_cnt >=  time_out_limit){
 		ret = -NAND_BUSY_FAILURE;
-	
+		printk("status:%x\n",status);
+		dump_stack();
+	}
 	return ret;
 }
 
