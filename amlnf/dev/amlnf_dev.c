@@ -552,12 +552,12 @@ static int get_nand_platform(struct aml_nand_device *aml_nand_dev,struct platfor
 #define POR_CARD_BOOT() 	(POR_BOOT_VALUE == 0)
 
 
-#define SPI_BOOT_FLAG 			0
+#define SPI_BOOT_FLAG 		0
 #define NAND_BOOT_FLAG 		1
 #define EMMC_BOOT_FLAG 		2
 #define CARD_BOOT_FLAG 		3
-#define SPI_NAND_FLAG			4
-#define SPI_EMMC_FLAG			5
+#define SPI_NAND_FLAG		4
+#define SPI_EMMC_FLAG		5
 
 /***
 *boot_device_flag = 0 ; indicate spi+nand boot
@@ -568,26 +568,27 @@ int check_storage_device(void)
 {
 	int value = -1;
 	value = boot_device_flag;	
+	/*  */
 	if((value == -1)||(value == 0)||(value == SPI_NAND_FLAG) ||(value == NAND_BOOT_FLAG) ){
-				if((value == 0)||(value == -1)){
-					
-					if(POR_NAND_BOOT()){
-						boot_device_flag = 1;
-					}else if(POR_EMMC_BOOT()){
-						boot_device_flag = -1;
-					}else if(POR_SPI_BOOT()){
-						boot_device_flag = 0;
-					}else if(POR_CARD_BOOT()){
-						boot_device_flag = 1;
-					}
-				}else{
-					boot_device_flag = 0;
-					if((value == NAND_BOOT_FLAG)){
-						boot_device_flag = 1;
-					}
-				}
+		/* not init, check poc */
+		if((value == 0)||(value == -1)){
+			if(POR_NAND_BOOT()){
+				boot_device_flag = 1;
+			}else if(POR_EMMC_BOOT()){
+				boot_device_flag = -1;
+			}else if(POR_SPI_BOOT()){
+				boot_device_flag = 0;
+			}else if(POR_CARD_BOOT()){	//why???
+				boot_device_flag = 1;
+			}
+		}else{ /*  */
+			boot_device_flag = 0;
+			if((value == NAND_BOOT_FLAG)){
+				boot_device_flag = 1;
+			}
+		}
 
-		}else {
+	} else {
 		boot_device_flag = -1;
 	}
 	aml_nand_msg("boot_device_flag : %d",boot_device_flag);

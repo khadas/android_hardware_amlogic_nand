@@ -779,7 +779,7 @@ void amlchip_resume(struct amlnand_phydev *phydev)
 	struct chip_operation *operation = &(aml_chip->operation);
 	unsigned char onfi_features[4] = {0};
 	int i=0,ret = 0;
-	
+	/* only resume once */
 	if (!strncmp((char*)phydev->name, NAND_CODE_NAME, strlen((const char*)NAND_CODE_NAME)) ){
 
     	nand_get_chip(aml_chip);
@@ -805,8 +805,7 @@ void amlchip_resume(struct amlnand_phydev *phydev)
     	}
     	
     	//if (aml_chip->state == CHIP_PM_SUSPENDED)
-    		amlnand_release_device(aml_chip);
-    	
+    	amlnand_release_device(aml_chip);
     	aml_nand_dbg("nand resume entered\n");
     }
 
@@ -1834,4 +1833,3 @@ void amlnf_phy_exit()
 
 }
 #endif
-

@@ -4,6 +4,7 @@
 
 extern  int block_markbad(struct amlnand_chip *aml_chip);
 
+#define CONFIG_NAND_ENV_DBG		(0)
 #ifdef AML_NAND_UBOOT
 //extern struct amlnf_partition amlnand_config;
 extern struct amlnf_partition * amlnand_config;
@@ -657,7 +658,14 @@ int amlnand_read_info_by_name(struct amlnand_chip *aml_chip,unsigned char * info
 	unsigned char  oob_buf[sizeof(struct _nand_arg_oobinfo)];
 	unsigned short start_blk, total_blk, tmp_blk;
 	int  ret = 0, len;
-	
+#if (CONFIG_NAND_ENV_DBG)
+	int _env = 0;
+
+	if (!memcmp(ENV_INFO_HEAD_MAGIC, name, 4)) {
+		_env = 1;
+		//aml_nand_msg("%s() %d: blk %d\n", __FUNCTION__, __LINE__, blk_addr);
+	}
+#endif
 	nand_boot = 1;
 	/*if(boot_device_flag == 0){
 		nand_boot = 0;
@@ -689,7 +697,7 @@ int amlnand_read_info_by_name(struct amlnand_chip *aml_chip,unsigned char * info
 	tmp_blk = start_blk;
 	total_blk = (offset >> phys_erase_shift)+ RESERVED_BLOCK_CNT;
 	
-	if(arg_info->arg_valid == 1){	
+	if(arg_info->arg_valid == 1){
 		
 		//load bbt
 		offset_tmp = 0;
@@ -714,7 +722,10 @@ int amlnand_read_info_by_name(struct amlnand_chip *aml_chip,unsigned char * info
 				if (flash->new_type == SANDISK_19NM) 
 					ops_para->page_addr = (ops_para->page_addr & (~(pages_per_blk -1))) |((ops_para->page_addr % pages_per_blk) << 1);
 			}
-
+		#if	(CONFIG_NAND_ENV_DBG)
+			if (_env)
+				aml_nand_msg("%s() %d: page (0x%x)", __FUNCTION__, __LINE__, ops_para->page_addr);
+		#endif 
 			ops_para->chipnr = arg_info->valid_blk_addr % controller->chip_num;		
 			controller->select_chip(controller, ops_para->chipnr );
 #ifdef AML_NAND_UBOOT
@@ -768,7 +779,9 @@ int amlnand_save_info_by_name(struct amlnand_chip *aml_chip,unsigned char * info
 	unsigned tmp_addr, temp_option;
 	unsigned char temp_ran_mode;
 	int full_page_flag=0, ret = 0, i,test_cnt = 0,extra_page = 0,write_page_cnt=0,temp_page_num = 0;
-	
+#if (CONFIG_NAND_ENV_DBG)
+	int _env = 0;
+#endif 
 	nand_boot = 1;
 	/*if(boot_device_flag == 0){
 		nand_boot = 0;
@@ -850,7 +863,12 @@ get_free_blk:
 		}
 		aml_nand_dbg("nand get free blcok  at %d",blk_addr); 
 	}
-	
+#if (CONFIG_NAND_ENV_DBG)
+	if (!memcmp(ENV_INFO_HEAD_MAGIC, name, 4)) {
+		_env = 1;
+		aml_nand_msg("%s() %d: blk %d\n", __FUNCTION__, __LINE__, blk_addr);
+	}
+#endif 
 //	show_data_buf(buf);
 	if(arg_info->arg_type == FULL_BLK){
 		for(i=0; i<pages_read;){
@@ -1067,7 +1085,10 @@ get_free_blk:
 				if (flash->new_type == SANDISK_19NM) 
 					ops_para->page_addr = (ops_para->page_addr & (~(pages_per_blk -1))) |((ops_para->page_addr % pages_per_blk) << 1);
 			}
-
+		#if (CONFIG_NAND_ENV_DBG)
+			if (_env)
+				aml_nand_msg("%s() %d: page (0x%x)", __FUNCTION__, __LINE__, ops_para->page_addr);
+		#endif 
 			ops_para->chipnr = blk_addr % controller->chip_num;
 			controller->select_chip(controller, ops_para->chipnr );
 			

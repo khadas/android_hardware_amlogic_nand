@@ -798,12 +798,14 @@ extern void nand_boot_info_prepare(struct amlnand_phydev *phydev, unsigned char 
 extern void uboot_set_ran_mode(struct amlnand_phydev *phydev);
 extern void get_sys_clk_rate(int * rate);
 extern int aml_ubootenv_init(struct amlnand_chip *aml_chip);
+extern int aml_ubootenv_reinit(struct amlnand_chip *aml_chip);
 unsigned int aml_info_checksum(unsigned char *data,int lenth);
 
 #ifndef AML_NAND_UBOOT
 extern  void   nand_get_chip(void *aml_chip);
 extern void  nand_release_chip(void *aml_chip);
 extern int aml_key_init(struct amlnand_chip *aml_chip);
+extern int aml_key_reinit(struct amlnand_chip *aml_chip);
 extern int aml_secure_init(struct amlnand_chip *aml_chip);
 extern int amlnand_info_init(struct amlnand_chip *aml_chip,unsigned char * info,unsigned char * buf,unsigned char *name,unsigned size);
 extern int amlnand_check_info_by_name(struct amlnand_chip *aml_chip,unsigned char * info,unsigned char * name ,unsigned size);
