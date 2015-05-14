@@ -382,7 +382,8 @@ typedef union nand_core_clk {
 #define	HYNIX_1YNM 								6
 //for Toshiba
 #define	TOSHIBA_2XNM 							20		//TC58NVG5D2HTA00
-#define	TOSHIBA_A19NM 							21																//TC58NVG6D2GTA00
+#define	TOSHIBA_A19NM 							21		//TC58NVG6D2GTA00
+#define TOSHIBA_15NM							22		//TC58TEG6DDLTA00
 //for SAMSUNG
 #define	SUMSUNG_2XNM 							30	
 
