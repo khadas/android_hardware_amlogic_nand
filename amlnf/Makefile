@@ -35,7 +35,7 @@ aml_nftl_dev-objs =
 aml_nftl_dev-objs += block/aml_nftl_block.o
 aml_nftl_dev-objs += block/aml_nftl_init.o
 aml_nftl_dev-objs += block/aml_nftl_hw_interface.o
-aml_nftl_dev-objs += nftl/aml_nftl_core_20150330.o
+aml_nftl_dev-objs += nftl/aml_nftl_core_20150608.o
 
 
 #bootimage building.
