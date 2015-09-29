@@ -27,27 +27,15 @@
 
 static int ntd_cls_suspend(struct device *dev, pm_message_t state);
 static int ntd_cls_resume(struct device *dev);
-static int ntd_cls_freeze(struct device *dev);
-static int ntd_cls_thaw(struct device *dev);
-static int ntd_cls_restore(struct device *dev);
 static int init_ntd(void);
 static DEFINE_SPINLOCK(ntd_idr_lock);
 static atomic_t ntd_init_available = ATOMIC_INIT(1);
-
-static struct dev_pm_ops ntd_pm_ops = {
-    //.suspend = nftl_suspend,
-    //.resume  = nftl_resume,
-    .freeze  = ntd_cls_freeze,
-    .thaw    = ntd_cls_thaw,
-    .restore = ntd_cls_restore,
-};
 
 static struct class ntd_class = {
 	.name = "ntd",
 	.owner = THIS_MODULE,
 	.suspend = ntd_cls_suspend,
 	.resume = ntd_cls_resume,
-	.pm     = &ntd_pm_ops,
 };
 
 static DEFINE_IDR(ntd_idr);
@@ -99,12 +87,11 @@ static int ntd_cls_suspend(struct device *dev, pm_message_t state)
 
 	if (ntd && ntd->suspend)
 	{
-	    printk( "ntd_cls_suspend %s\n",ntd->name);
+
 		return ntd->suspend(ntd);
 	}
 	else
 	{
-	    printk( "ntd_cls_suspend null \n");
 		return 0;
 	}
 }
@@ -122,52 +109,13 @@ static int ntd_cls_resume(struct device *dev)
 
 	if (ntd && ntd->resume)
 	{
-	    printk( "ntd_cls_resume %s\n",ntd->name);
 		ntd->resume(ntd);
 	}
 	else
 	{
-        printk( "ntd_cls_resume null\n");
 	}
 	return 0;
 }
-
-static int ntd_cls_freeze(struct device *dev)
-{
-	struct ntd_info *ntd = dev_to_ntd(dev);
-	if (ntd && ntd->freeze) {
-	    //printk( "%s(): %s\n", __FUNCTION__, ntd->name);
-		ntd->freeze(ntd);
-	}else{
-        //printk( "%s(): null\n", __FUNCTION__);
-	}
-	return 0;
-}
-
-static int ntd_cls_thaw(struct device *dev)
-{
-	struct ntd_info *ntd = dev_to_ntd(dev);
-	if (ntd && ntd->thaw) {
-	    //printk( "%s(): %s\n", __FUNCTION__, ntd->name);
-		ntd->thaw(ntd);
-	}else{
-        //printk( "%s(): null\n", __FUNCTION__);
-	}
-	return 0;
-}
-
-static int ntd_cls_restore(struct device *dev)
-{
-	struct ntd_info *ntd = dev_to_ntd(dev);
-	if (ntd && ntd->restore) {
-	    printk( "%s(): %s\n", __FUNCTION__, ntd->name);
-		ntd->restore(ntd);
-	}else{
-        printk( "%s(): null\n", __FUNCTION__);
-	}
-	return 0;
-}
-
 
 /*****************************************************************************
 *Name         :

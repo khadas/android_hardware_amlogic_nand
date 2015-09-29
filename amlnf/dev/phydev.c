@@ -42,15 +42,15 @@ void set_chip_state(struct amlnand_chip *aml_chip, chip_state_t state)
 
 int aml_nftl_getphydev_size(char *name, uint64_t *size)
 {
-	 struct amlnand_phydev *phydev = NULL;
-	 int ret = -1,i;
-	 uint64_t dev_size=0;
-	 *size = 0;
-	 list_for_each_entry(phydev, &nphy_dev_list, list){
-		 if (phydev != NULL) {
-			if (!strncmp((char*)phydev->name, name, strlen((const char*)name))) {
+	struct amlnand_phydev *phydev = NULL;
+	int ret = -1,i;
+	uint64_t dev_size=0;
+	*size = 0;
+	list_for_each_entry(phydev, &nphy_dev_list, list){
+		if ( phydev != NULL ) {
+			if ( !strncmp((char*)phydev->name, name, strlen((const char*)name)) ) {
 				aml_nand_msg("calculate device -- %s",name);
-				for (i=0;i < phydev->nr_partitions;i++ )
+				for ( i = 0; i < phydev->nr_partitions; i++ )
 				{
 					dev_size += phydev->partitions[i].size;
 				}
@@ -59,8 +59,8 @@ int aml_nftl_getphydev_size(char *name, uint64_t *size)
 				goto exit_error;
 			}
 		}
-	 }
- exit_error:
+	}
+exit_error:
 	return ret;
 }
 EXPORT_SYMBOL(aml_nftl_getphydev_size);

@@ -208,12 +208,12 @@ int roomboot_nand_read(struct amlnand_phydev *phydev)
 		controller->oob_mod =0;
 	}
 
-	amlnand_get_device(aml_chip, CHIP_READING);
+	/*amlnand_get_device(aml_chip, CHIP_READING);*/
 	ret = read_uboot(phydev);
 	if(ret < 0){
 		aml_nand_dbg("nand read failed at %llx",devops->addr);
 	}
-	amlnand_release_device(aml_chip);
+	/*amlnand_release_device(aml_chip);*/
 	if(oob_set) {
 		controller->oob_mod =oob_set;
 		NFC_SET_OOB_MODE(3<<26);
@@ -571,6 +571,7 @@ static ssize_t uboot_read(struct file *file, char __user *buf,
 			size_t count, loff_t *ppos)
 {
 	struct amlnand_phydev * phydev = uboot_phydev;
+	struct amlnand_chip *aml_chip = phydev->priv;
 	struct phydev_ops *devops = &(phydev->ops);
 	unsigned char *data_buf;
 	int  ret;
@@ -589,12 +590,14 @@ static ssize_t uboot_read(struct file *file, char __user *buf,
 	devops->len = align_count;
 	devops->mode = NAND_HW_ECC;
 	devops->datbuf = data_buf;
+	amlnand_get_device(aml_chip, CHIP_WRITING);
 
 	ret = roomboot_nand_read(phydev);
 	if (ret < 0){
 		aml_nand_dbg("uboot_write failed");
 		count = 0;
 	}
+	amlnand_release_device(aml_chip);
 	ret=copy_to_user(buf, data_buf, count);
 err_exit0:
 

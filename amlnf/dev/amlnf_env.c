@@ -226,7 +226,7 @@ int amlnf_env_save(unsigned char *buf,int len)
 	unsigned char *env_buf = NULL;
 	struct nand_flash *flash = &aml_chip_env->flash;
 	int ret=0;
-	aml_nand_dbg("uboot env amlnf_env_save : ####");
+	aml_nand_msg("uboot env amlnf_env_save : ####");
 
 	if(len > CONFIG_ENV_SIZE)
 	{
@@ -266,7 +266,7 @@ int amlnf_env_read(unsigned char *buf,int len)
 	int ret=0;
 	struct nand_flash *flash = &aml_chip_env->flash;
 	
-	aml_nand_dbg("uboot env amlnf_env_read : ####");
+	aml_nand_msg("uboot env amlnf_env_read : ####");
 
 	if(len > CONFIG_ENV_SIZE) 
 	{

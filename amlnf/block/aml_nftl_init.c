@@ -34,6 +34,7 @@ extern uint32 __nand_flush_write_cache(struct aml_nftl_part_t* part);
 extern uint32 __nand_invalid_read_cache(struct aml_nftl_part_t* part);
 extern uint32 __nand_flush_discard_cache(struct aml_nftl_part_t* part);
 extern uint32 __nand_write_pair_page(struct aml_nftl_part_t* part);
+extern int __get_current_part_no(struct aml_nftl_part_t* part);
 extern uint32 __check_mapping(struct aml_nftl_part_t* part,uint64_t offset,uint64_t size);
 extern uint32 __discard_partition(struct aml_nftl_part_t* part,uint64_t offset,uint64_t size);
 extern void print_free_list(struct aml_nftl_part_t* part);
@@ -50,6 +51,8 @@ uint32 _nand_flush_write_cache(struct aml_nftl_dev *nftl_dev);
 uint32 _nand_invalid_read_cache(struct aml_nftl_dev *nftl_dev);
 uint32 _nand_flush_discard_cache(struct aml_nftl_dev *nftl_dev);
 uint32 _nand_write_pair_page(struct aml_nftl_dev *nftl_dev);
+int _get_current_part_no(struct aml_nftl_dev *nftl_dev);
+
 uint32 _check_mapping(struct aml_nftl_dev *nftl_dev,uint64_t offset,uint64_t size);
 uint32 _discard_partition(struct aml_nftl_dev *nftl_dev,uint64_t offset,uint64_t size);
 uint32 _blk_nand_flush_write_cache(struct aml_nftl_blk *nftl_blk);
@@ -163,13 +166,14 @@ int aml_nftl_initialize(struct aml_nftl_dev *nftl_dev,int no)
 	nftl_dev->size = aml_nftl_get_part_cap(nftl_dev->aml_nftl_part);
 	nftl_dev->read_data = _nand_read;
 	nftl_dev->write_data = _nand_write;
-    nftl_dev->discard_data = _nand_discard;
+	nftl_dev->discard_data = _nand_discard;
 	nftl_dev->flush_write_cache = _nand_flush_write_cache;
-    nftl_dev->flush_discard_cache = _nand_flush_discard_cache;
+	nftl_dev->flush_discard_cache = _nand_flush_discard_cache;
 	nftl_dev->invalid_read_cache = _nand_invalid_read_cache;
-    nftl_dev->write_pair_page = _nand_write_pair_page;
-    nftl_dev->check_mapping = _check_mapping;
-    nftl_dev->discard_partition = _discard_partition;
+	nftl_dev->write_pair_page = _nand_write_pair_page;
+	nftl_dev->get_current_part_no = _get_current_part_no;
+	nftl_dev->check_mapping = _check_mapping;
+	nftl_dev->discard_partition = _discard_partition;
 	nftl_dev->rebuild_tbls = _rebuild_tbls;
 	nftl_dev->compose_tbls = _compose_tbls;
 	
@@ -339,6 +343,10 @@ uint32 _nand_flush_discard_cache(struct aml_nftl_dev *nftl_dev)
 uint32 _nand_write_pair_page(struct aml_nftl_dev *nftl_dev)
 {
     return __nand_write_pair_page(nftl_dev->aml_nftl_part);
+}
+int _get_current_part_no(struct aml_nftl_dev *nftl_dev)
+{
+    return __get_current_part_no(nftl_dev->aml_nftl_part);
 }
 uint32 _check_mapping(struct aml_nftl_dev *nftl_dev,uint64_t offset,uint64_t size)
 {

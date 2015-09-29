@@ -207,8 +207,6 @@ static int controller_quene_rb(struct hw_controller *controller, unsigned char c
 
 	if(time_out_cnt >=  time_out_limit){
 		ret = -NAND_BUSY_FAILURE;
-		printk("status:%x\n",status);
-		dump_stack();
 	}
 	return ret;
 }
