@@ -971,7 +971,7 @@ static int aml_nftl_probe(struct platform_device *pdev)
 	dev_num = 0;
 
 	ret = register_ntd_blktrans(&aml_nftl_tr);
-	PRINT("init_aml_nftl end return %d\n", ret);
+	/* PRINT("init_aml_nftl end return %d\n", ret); */
 
 	return ret;
 }
@@ -1031,7 +1031,7 @@ static int __init init_aml_nftl(void)
 		pr_err("failed to register unifykey driver, error %d\n", ret);
 		return -ENODEV;
 	}
-	pr_info(KERN_INFO "%s done!\n", __func__);
+	/* pr_info(KERN_INFO "%s done!\n", __func__); */
 
 	return ret;
 }
