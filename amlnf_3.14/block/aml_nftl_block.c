@@ -316,8 +316,7 @@ static int do_nftltrans_request(struct ntd_blktrans_ops *tr,
 	/* aml_nftl_dbg("nftl segments: %d\n", segments+1); */
 
 	mutex_lock(nftl_blk->nftl_dev->aml_nftl_lock);
-	switch (rq_data_dir(req)) {
-	case READ:
+	if (rq_data_dir(req) == READ) {
 	for (i = 0; i < (segments+1); i++) {
 		blk_addr = (block + (offset_addr[i] >> tr->blkshift));
 		blk_cnt = ((offset_addr[i+1] - offset_addr[i]) >> tr->blkshift);
@@ -331,9 +330,7 @@ static int do_nftltrans_request(struct ntd_blktrans_ops *tr,
 		}
 	}
 	bio_flush_dcache_pages(nftl_blk->req->bio);
-	break;
-
-	case WRITE:
+	} else if (rq_data_dir(req) == WRITE) {
 	bio_flush_dcache_pages(nftl_blk->req->bio);
 	nftl_blk->nftl_dev->sync_flag = 0;
 	for (i = 0; i < (segments+1); i++) {
@@ -352,11 +349,8 @@ static int do_nftltrans_request(struct ntd_blktrans_ops *tr,
 	if (nftl_blk->req->cmd_flags & REQ_SYNC)
 		nftl_blk->flush_write_cache(nftl_blk);
 
-	break;
-
-	default:
-	aml_nftl_dbg(KERN_NOTICE "Unknown request %u\n", rq_data_dir(req));
-	break;
+	} else {
+		aml_nftl_dbg(KERN_NOTICE "Unknown request %u\n", rq_data_dir(req));
 	}
 
 	mutex_unlock(nftl_blk->nftl_dev->aml_nftl_lock);
