@@ -77,7 +77,9 @@ static int read_uboot(struct amlnand_phydev *phydev)
 		ops_para->option |= DEV_ECC_SOFT_MODE;
 	}
 
-	if((flash->new_type) &&((flash->new_type < 10) || (flash->new_type == SANDISK_19NM)))
+	if ((flash->new_type) && ((flash->new_type < 10) ||
+		(flash->new_type == SANDISK_19NM) ||
+		(slc_info->mircon_l0l3_mode == 1)))
 		ops_para->option |= DEV_SLC_MODE;
 
 	pages_per_blk = flash->blocksize / flash->pagesize;
@@ -103,7 +105,8 @@ static int read_uboot(struct amlnand_phydev *phydev)
 
 		ops_para->page_addr = ((unsigned)addr / flash->pagesize);// /controller->chip_num;
 		if((ops_para->option & DEV_SLC_MODE)) {
-			if((flash->new_type > 0) && (flash->new_type <10))
+			if ((flash->new_type > 0) && (flash->new_type <10 ||
+				(slc_info->mircon_l0l3_mode == 1)))
 				ops_para->page_addr = (ops_para->page_addr & (~(pages_per_blk -1))) |(slc_info->pagelist[ops_para->page_addr % 256]);
 			if (flash->new_type == SANDISK_19NM)
 				ops_para->page_addr = (ops_para->page_addr & (~(pages_per_blk -1))) |((ops_para->page_addr % pages_per_blk) << 1);
@@ -239,6 +242,8 @@ static int write_uboot(struct amlnand_phydev *phydev)
 	unsigned char * lazy_buf = devops->datbuf;
 	//unsigned char  *tmp_buf;
 	char write_boot_status[BOOT_COPY_NUM] = {0},err = 0;
+	unsigned fill_len;
+	unsigned char rand_val[4] = {0, 0, 0, 0}, rand_flag = 0;
 
 	if((devops->addr + devops->len) >  phydev->size){
 		aml_nand_msg("writeboot:out of space and addr:%llx len:%llx phydev->offset:%llx phydev->size:%llx",\
@@ -294,13 +299,14 @@ static int write_uboot(struct amlnand_phydev *phydev)
 		oob_buf[i] = 0x55;
 		oob_buf[i+1] = 0xaa;
 	}
-	fill_buf = aml_nand_malloc(flash->pagesize);
+	fill_len = flash->pagesize + flash->oobsize;
+	fill_buf = aml_nand_malloc(fill_len);
 	if(fill_buf == NULL){
-		aml_nand_msg("malloc failed and oobavail:%d", flash->pagesize);
+		aml_nand_msg("malloc failed and oobavail:%d", fill_len);
 		ret = -NAND_MALLOC_FAILURE;
 		goto error_exit;
 	}
-	memset(fill_buf,0xff,flash->pagesize);
+	memset(fill_buf, 0xff, fill_len);
 
 	//clear ops_para here
 	memset(ops_para, 0, sizeof(struct chip_ops_para));
@@ -309,8 +315,10 @@ static int write_uboot(struct amlnand_phydev *phydev)
 	ops_para->data_buf = devops->datbuf;
 	ops_para->oob_buf = oob_buf;
 
-	if((flash->new_type) &&((flash->new_type < 10) || (flash->new_type == SANDISK_19NM)))
-	ops_para->option |= DEV_SLC_MODE;
+	if ((flash->new_type) && ((flash->new_type < 10) ||
+		(flash->new_type == SANDISK_19NM) ||
+		(slc_info->mircon_l0l3_mode == 1)))
+		ops_para->option |= DEV_SLC_MODE;
 
 	configure_data = NFC_CMD_N2M(controller->ran_mode, controller->bch_mode, 0, (controller->ecc_unit >> 3), controller->ecc_steps);
 
@@ -345,24 +353,43 @@ static int write_uboot(struct amlnand_phydev *phydev)
 			ops_para->page_addr = ((unsigned)addr / flash->pagesize);// /controller->chip_num;
 			ops_tem = ops_para->page_addr ;
 			if((ops_para->option & DEV_SLC_MODE)) {
-				if((flash->new_type > 0) && (flash->new_type < 10))
+				if ((flash->new_type > 0) && ( (flash->new_type < 10) ||
+					(flash->new_type == MICRON_20NM)))
 					ops_para->page_addr = (ops_para->page_addr & (~(pages_per_blk -1))) |(slc_info->pagelist[ops_para->page_addr % 256]);
 				if (flash->new_type == SANDISK_19NM)
 					ops_para->page_addr = (ops_para->page_addr & (~(pages_per_blk -1))) |((ops_para->page_addr % pages_per_blk) << 1);
 			}
 #if 1
-			if(flash->new_type ==HYNIX_1YNM) {
+			if(flash->new_type ==HYNIX_1YNM ||
+				slc_info->mircon_l0l3_mode == 1) {
 				if((ops_tem % 256)>1) {
 					priv_lsb =  (ops_tem & (~(pages_per_blk -1))) |(slc_info->pagelist[(ops_tem % 256)-1]);
 				ops_tem = ops_para->page_addr ;
+				rand_flag = 0;
+				if (flash->new_type == MICRON_20NM &&
+					ops_tem > (priv_lsb+1)) {
+					rand_val[0] = 0;
+					rand_flag = 1;
+					operation->set_onfi_para(
+					aml_chip,
+					rand_val,
+					0x92);
+				}
 				while(ops_tem > (priv_lsb+1)) {
-				ops_para->data_buf = fill_buf;
-				controller->bch_mode =NAND_ECC_NONE;
-				controller->ran_mode =0;
-				ops_para->page_addr = priv_lsb+1;
-				 operation->write_page(aml_chip);
-				 priv_lsb++;
-					}
+					ops_para->data_buf = fill_buf;
+					controller->bch_mode =NAND_ECC_NONE;
+					controller->ran_mode =0;
+					ops_para->page_addr = priv_lsb+1;
+					operation->write_page(aml_chip);
+					priv_lsb++;
+				}
+				if (rand_flag == 1) {
+					rand_val[0] = 1;
+					operation->set_onfi_para(
+					aml_chip,
+					rand_val,
+					0x92);
+				}
 				ops_para->page_addr = ops_tem;
 				ops_para->data_buf = devops->datbuf;
 				controller->ecc_unit = tmp_ecc_unit;

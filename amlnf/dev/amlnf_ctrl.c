@@ -465,10 +465,13 @@ void get_sys_clk_rate(int * rate)
 #endif
 	pages_per_blk = flash->blocksize / flash->pagesize;
 	new_nand_type = aml_chip->flash.new_type;
+	if (slc_info->mircon_l0l3_mode == 1)
+		new_nand_type |= (1<<31);/* mircon l0l3 type mode*/
 	//en_slc = (( flash->new_type < 10)&&( flash->new_type))? 1:0;
 	configure_data = NFC_CMD_N2M(controller->ran_mode, controller->bch_mode, 0, (controller->ecc_unit >> 3), controller->ecc_steps);	
 
-    if(( flash->new_type < 10)&&( flash->new_type)){
+    if (( flash->new_type < 10 || slc_info->mircon_l0l3_mode == 1)
+		&& (flash->new_type)) {
         en_slc = 1;
     }
     else if(flash->new_type == SANDISK_19NM){
