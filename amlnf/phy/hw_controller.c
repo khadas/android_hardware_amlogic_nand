@@ -562,17 +562,6 @@ static int controller_adjust_timing(struct hw_controller *controller)
 	#endif
 	NFC_SET_CFG(0);
 	NFC_SET_TIMING_ASYC(bus_timing, (bus_cycle - 1));
-#if defined(AML_NAND_NEW_OOB) && defined (CONFIG_NAND_AML_M8)
-	if(flash->pagesize > 4096){
-		aml_nand_msg("AML_NAND_NEW_OOB : new oob");
-		NFC_SET_OOB_MODE(3<<26);
-		controller->oob_mod = 1;
-	}else{
-		controller->oob_mod = 0;	
-	}
-#else
-	controller->oob_mod = 0;	
-#endif
 
 	NFC_SEND_CMD(1<<31);
 	aml_nand_msg("bus_cycle=%d, bus_timing=%d,system=%d.%dns,flash->T_REA =%d,flash->T_RHOH=%d",
@@ -590,7 +579,7 @@ static int controller_ecc_confirm(struct hw_controller *controller)
 	struct nand_flash *flash = &(aml_chip->flash);
 	struct bch_desc *ecc_supports = controller->bch_desc;	
 	unsigned max_bch_mode = controller->max_bch;
-	unsigned options_support = 0, ecc_bytes, i;
+	unsigned options_support = 0, ecc_bytes, ecc_page_cnt = 0, i;
 
 	if(controller->option & NAND_ECC_SOFT_MODE){
 		controller->ecc_unit = flash->pagesize + flash->oobsize;
@@ -598,22 +587,48 @@ static int controller_ecc_confirm(struct hw_controller *controller)
 		aml_nand_msg("soft ecc mode");
 		return NAND_SUCCESS;
 	}
-	
-	for(i=(max_bch_mode-1); i>0; i--){
-		ecc_bytes = flash->oobsize/(flash->pagesize/ecc_supports[i].unit_size);
+
+	for (i=(max_bch_mode-1); i>0; i--) {
+		ecc_page_cnt = flash->pagesize/ecc_supports[i].unit_size;
+		ecc_bytes = flash->oobsize/ecc_page_cnt;
 		if(ecc_bytes >= ecc_supports[i].bytes + ecc_supports[i].usr_mode){
 			options_support = ecc_supports[i].mode;
 			break;
 		}
 	}
-	
+
+	controller->oob_mod = 0;
+#if defined(AML_NAND_NEW_OOB) && defined (CONFIG_NAND_AML_M8)
+	if (flash->oobsize >= (16+ecc_supports[i].bytes*ecc_page_cnt)) {
+		/* for backward compatbility 4k page mlc. The code
+		we released before like below, which means old oob
+		mode will be used when page size < 4k.
+		------------------------------------
+		if (flash->pagesize > 4096) {
+			aml_nand_msg("AML_NAND_NEW_OOB : new oob");
+			NFC_SET_OOB_MODE(3<<26);
+			controller->oob_mod = 1;
+		}else{
+			controller->oob_mod = 0;
+		}
+		------------------------------------*/
+		if ((flash->pagesize == 4096)
+			&& (flash->chipsize > 2048))
+			controller->oob_mod = 0;
+		else {
+			aml_nand_msg("new oob mode");
+			NFC_SET_OOB_MODE(3<<26);
+			controller->oob_mod = 1;
+		}
+	}
+#endif
+
 	switch (options_support) {
 
 		case NAND_ECC_BCH8_MODE:
 			controller->ecc_unit = NAND_ECC_UNIT_SIZE;
 			controller->ecc_bytes = NAND_BCH8_ECC_SIZE;
 			controller->bch_mode = NAND_ECC_BCH8;
-			controller->user_mode = 2;
 			controller->ecc_cnt_limit = 6;
 		  	controller->ecc_max = 8;
 			break;
@@ -622,7 +637,6 @@ static int controller_ecc_confirm(struct hw_controller *controller)
 			controller->ecc_unit = NAND_ECC_UNIT_1KSIZE;
 			controller->ecc_bytes = NAND_BCH8_1K_ECC_SIZE;
 			controller->bch_mode = NAND_ECC_BCH8_1K;
-			controller->user_mode = 2;
 			controller->ecc_cnt_limit = 6;
 		  	controller->ecc_max = 8;
 			break;
@@ -631,7 +645,6 @@ static int controller_ecc_confirm(struct hw_controller *controller)
 			controller->ecc_unit = NAND_ECC_UNIT_1KSIZE;
 			controller->ecc_bytes = NAND_BCH16_1K_ECC_SIZE;
 			controller->bch_mode = NAND_ECC_BCH16_1K;
-			controller->user_mode = 2;
 			controller->ecc_cnt_limit = 14;
 		  	controller->ecc_max = 16;
 			break;
@@ -640,7 +653,6 @@ static int controller_ecc_confirm(struct hw_controller *controller)
 			controller->ecc_unit = NAND_ECC_UNIT_1KSIZE;
 			controller->ecc_bytes = NAND_BCH24_1K_ECC_SIZE;
 			controller->bch_mode = NAND_ECC_BCH24_1K;
-			controller->user_mode = 2;
 			controller->ecc_cnt_limit = 22;
 		  	controller->ecc_max = 24;
 			break;
@@ -649,7 +661,6 @@ static int controller_ecc_confirm(struct hw_controller *controller)
 			controller->ecc_unit = NAND_ECC_UNIT_1KSIZE;
 			controller->ecc_bytes = NAND_BCH30_1K_ECC_SIZE;
 			controller->bch_mode = NAND_ECC_BCH30_1K;
-			controller->user_mode = 2;
 			controller->ecc_cnt_limit = 26;
 		  	controller->ecc_max = 30;
 			break;
@@ -658,7 +669,6 @@ static int controller_ecc_confirm(struct hw_controller *controller)
 			controller->ecc_unit = NAND_ECC_UNIT_1KSIZE;
 			controller->ecc_bytes = NAND_BCH40_1K_ECC_SIZE;
 			controller->bch_mode = NAND_ECC_BCH40_1K;
-			controller->user_mode = 2;
 			controller->ecc_cnt_limit = 34;
 		  	controller->ecc_max = 40;
 			break;
@@ -667,7 +677,6 @@ static int controller_ecc_confirm(struct hw_controller *controller)
 			controller->ecc_unit = NAND_ECC_UNIT_1KSIZE;
 			controller->ecc_bytes = NAND_BCH50_1K_ECC_SIZE;
 			controller->bch_mode = NAND_ECC_BCH50_1K;
-			controller->user_mode = 2;
 			controller->ecc_cnt_limit = 45;
 		  	controller->ecc_max = 50;
 			break;
@@ -676,7 +685,6 @@ static int controller_ecc_confirm(struct hw_controller *controller)
 			controller->ecc_unit = NAND_ECC_UNIT_1KSIZE;
 			controller->ecc_bytes = NAND_BCH60_1K_ECC_SIZE;
 			controller->bch_mode = NAND_ECC_BCH60_1K;
-			controller->user_mode = 2;
 			controller->ecc_cnt_limit = 55;
 		  	controller->ecc_max = 60;
 			break;
@@ -685,7 +693,6 @@ static int controller_ecc_confirm(struct hw_controller *controller)
 			controller->ecc_unit = NAND_ECC_UNIT_SHORT;
 			controller->ecc_bytes = NAND_BCH60_1K_ECC_SIZE;
 			controller->bch_mode = NAND_ECC_BCH_SHORT;
-			controller->user_mode = 2;			
 			controller->ecc_cnt_limit = 55;
 		  	controller->ecc_max = 60;
 			break;
@@ -697,6 +704,10 @@ static int controller_ecc_confirm(struct hw_controller *controller)
 			break;
 	}
 
+	if (controller->oob_mod == 1)
+		controller->user_mode = 16 / (flash->pagesize / controller->ecc_unit);
+	else
+		controller->user_mode = 2;
 	controller->ecc_steps = (flash->pagesize+flash->oobsize)/(controller->ecc_unit + controller->ecc_bytes + controller->user_mode);
 	controller->oobavail = controller->ecc_steps*controller->user_mode;
 	controller->oobtail = flash->pagesize - controller->ecc_steps*(controller->ecc_unit + controller->ecc_bytes + controller->user_mode);	
@@ -764,10 +775,8 @@ static void controller_get_user_byte(struct hw_controller *controller, unsigned 
 	while (byte_num > 0) {
 		*oob_buf++ = (controller->user_buf[read_times*len] & 0xff);
 		byte_num--;
-		if (controller->user_mode == 2) {
-			*oob_buf++ = ((controller->user_buf[read_times*len] >> 8) & 0xff);
-			byte_num--;
-		}
+		*oob_buf++ = ((controller->user_buf[read_times*len] >> 8) & 0xff);
+		byte_num--;
 		read_times++;
 	}
 }
@@ -785,10 +794,8 @@ static void controller_set_user_byte(struct hw_controller *controller, unsigned 
 	while (byte_num > 0) {
 		controller->user_buf[write_times*len] = *oob_buf++;
 		byte_num--;
-		if (controller->user_mode == 2) {
-			controller->user_buf[write_times*len] |= (*oob_buf++ << 8);
-			byte_num--;
-		}
+		controller->user_buf[write_times*len] |= (*oob_buf++ << 8);
+		byte_num--;
 		write_times++;
 	}
 }
