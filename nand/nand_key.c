@@ -504,11 +504,14 @@ static int aml_nand_key_init(struct mtd_info *mtd)
 	struct env_free_node_t  *multi_free_node,*mult_free_tmp_node;
 	int have_env_free_node_flag;
 	#endif
-	int error = 0, start_blk, total_blk, key_blk, i, pages_per_blk, bad_blk_cnt = 0, max_key_blk, max_env_blk,phys_erase_shift;
-	uint64_t offset, env_offset;
+	int error = 0, start_blk, key_blk, i, pages_per_blk, bad_blk_cnt = 0, max_key_blk,phys_erase_shift;
+	uint64_t offset;//, env_offset;
 	unsigned char *data_buf;
 	struct mtd_oob_ops aml_oob_ops;
 	unsigned char key_oob_buf[sizeof(struct env_oobinfo_t)];
+	int remain_block=0;
+	int remain_start_block;
+	int remain_tatol_block;
 
 	data_buf = kzalloc(mtd->writesize, GFP_KERNEL);
 	if (data_buf == NULL)
@@ -566,9 +569,6 @@ static int aml_nand_key_init(struct mtd_info *mtd)
 
 #define REMAIN_TAIL_BLOCK_NUM		8
 	offset = mtd->size - mtd->erasesize;
-	int remain_block=0;
-	int remain_start_block;
-	int remain_tatol_block;
 	remain_start_block = (int)(offset >> phys_erase_shift);
 	remain_tatol_block = REMAIN_TAIL_BLOCK_NUM;
 	aml_chip->aml_nandkey_info->start_block=remain_start_block;
@@ -1217,8 +1217,8 @@ static int aml_nand_key_check(struct mtd_info *mtd)
 	struct aml_nand_part_info *aml_nand_part;
 	//struct mtd_partition *parts;
 	mesonkey_t *key_ptr;
-	int error = 0, start_blk, total_blk, update_key_flag = 0, i, j, nr, max_env_blk, phys_erase_shift;
-	uint64_t offset, env_offset;
+	int error = 0, start_blk, total_blk, update_key_flag = 0, i, j, nr, phys_erase_shift;
+	uint64_t offset;
 
 	chip = chip;
 	nr = 0;
@@ -1407,6 +1407,7 @@ exit:
 	return 0;
 }
 
+#if 0
 static int aml_nand_update_key(struct mtd_info *mtd)
 {
 	struct aml_nand_chip *aml_chip = mtd_to_nand_chip(mtd);
@@ -1440,7 +1441,7 @@ exit:
 	kfree(key_ptr);
 	return error;
 }
-
+#endif
 
 static struct mtd_info *nand_key_mtd = NULL;
 
