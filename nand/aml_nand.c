@@ -261,6 +261,7 @@ struct aml_nand_flash_dev aml_nand_flash_ids[] = {
 	{"A revision NAND 4Gib EMST ", {0xc8, 0xac, 0x90, 0x15, 0x54, 0x7f}, 2048, 512, 0x20000, 64, 1, 16, 15, 0, (NAND_TIMING_MODE5 | NAND_ECC_BCH8_MODE )},	//esmt.
 	{"A revision NAND 4Gib F59L2G81A EMST ", {0xc8, 0xda, 0x90, 0x95, 0x44, 0x7f}, 2048, 256, 0x20000, 64, 1, 20, 15, 0, (NAND_TIMING_MODE5 | NAND_ECC_BCH8_MODE )},  //emst.
 	{"A revision NAND 4Gib TC58NVG1S3HBAI4 ", {0x98, 0xda, 0x90, 0x15, 0x76}, 2048, 256, 0x20000, 64, 1, 20, 25, 0, (NAND_TIMING_MODE5 | NAND_ECC_BCH8_MODE )},
+	{"A revision NAND 4Gib MT29F2G08ABA ", {NAND_MFR_MICRON, 0xda, 0x90, 0x95, 0x06}, 2048, 256, 0x20000, 64, 1, 16, 15, 0, (NAND_TIMING_MODE5 | NAND_ECC_BCH8_MODE )},
 	{NULL,}
 };
 
