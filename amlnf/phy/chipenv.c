@@ -2747,6 +2747,49 @@ void amlnand_set_config_attribute(struct amlnand_chip *aml_chip)
 	return;
 }
 
+
+int amlnand_recover_fbbt(struct amlnand_chip *aml_chip)
+{
+	struct hw_controller *controller = &aml_chip->controller;
+	struct nand_flash *flash = &aml_chip->flash;
+	u32 total_blk, chipnr, start_block, factory_badblock_cnt=0;
+	u16 *tmp_fbbt, *tmp_status;
+	u8 phys_erase_shift;
+	u64 chip_size;
+
+	phys_erase_shift = ffs(flash->blocksize) - 1;
+	chip_size = flash->chipsize;
+	total_blk = (int) ((chip_size<<20) >> phys_erase_shift);
+	factory_badblock_cnt = 0;
+
+	for (chipnr = 0; chipnr < controller->chip_num;  chipnr++) {
+		tmp_fbbt = &aml_chip->shipped_bbt_ptr->shipped_bbt[chipnr][0];
+		tmp_status = &aml_chip->block_status->blk_status[chipnr][0];
+		for (start_block = 0; start_block < total_blk; start_block++) {
+			if (tmp_status[start_block] == NAND_BLOCK_FACTORY_BAD) {
+				tmp_fbbt[factory_badblock_cnt++] = (0x8000 | (u16)start_block);
+				if ((controller->flash_type == NAND_TYPE_MLC) &&
+					(flash->option & NAND_MULTI_PLANE_MODE)) {
+					if ((start_block % 2) == 0 ) {
+						start_block += 1;
+						tmp_fbbt[factory_badblock_cnt++] =
+							(u16)start_block |0x8000;
+					} else
+						tmp_fbbt[factory_badblock_cnt++] =
+							(u16)(start_block -1) |0x8000;
+
+					if (factory_badblock_cnt >= MAX_BAD_BLK_NUM) {
+						aml_nand_dbg("%s : error too many bad blocks",
+							__func__);
+						return -1;
+					}
+				}
+			}
+		}
+	}
+	return 0;
+}
+
 /*****************************************************************************
 *Name         :amlnand_get_dev_configs
 *Description :search bbt /fbbt /config /key;
@@ -2952,6 +2995,7 @@ int amlnand_get_dev_configs(struct amlnand_chip *aml_chip)
 			}
 		}
 #endif
+		ret = amlnand_info_init(aml_chip, (unsigned char *)&(aml_chip->shipped_bbtinfo), (unsigned char *)aml_chip->shipped_bbt_ptr, (unsigned char *)SHIPPED_BBT_HEAD_MAGIC, sizeof(struct shipped_bbt));
 	}
 
         //scan phy partition info here, if we can't find phy partition, we will calc and save it in phydev init stage.
@@ -2963,6 +3007,16 @@ int amlnand_get_dev_configs(struct amlnand_chip *aml_chip)
 		if(ret < 0){
 			aml_nand_msg("nand init sys_info failed and ret:%d", ret);					
 			goto exit_error0;
+		}
+		if (aml_chip->shipped_bbtinfo.arg_valid == 0) {
+			amlnand_recover_fbbt(aml_chip);
+			aml_chip->shipped_bbt_ptr->crc = aml_info_checksum((unsigned char *)aml_chip->shipped_bbt_ptr->shipped_bbt,(MAX_CHIP_NUM*MAX_BAD_BLK_NUM));
+			//aml_chip->shipped_bbt_ptr->chipnum = controller->chip_num;
+			ret = amlnand_save_info_by_name(aml_chip, (unsigned char *)&(aml_chip->shipped_bbtinfo),(unsigned char *)aml_chip->shipped_bbt_ptr,(unsigned char *)SHIPPED_BBT_HEAD_MAGIC, sizeof(struct shipped_bbt));
+			if (ret < 0) {
+				aml_nand_msg("nand save shipped bbt failed and ret:%d",ret);
+				goto exit_error0;
+			}
 		}
 
 #ifdef AML_NAND_UBOOT
