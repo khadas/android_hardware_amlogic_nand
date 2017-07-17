@@ -1,6 +1,4 @@
 /*
- * drivers/amlogic/amlnf/block/aml_nftl_init.c
- *
  * Copyright (C) 2015 Amlogic, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -14,7 +12,6 @@
  * more details.
  *
 */
-
 
 
 #include "aml_nftl_block.h"
